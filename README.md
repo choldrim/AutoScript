@@ -3,9 +3,10 @@
 ####A series of scripts which will auto start in jenkins.
 
 ##Extends
-####Just add a folder(such as: ExampleScript) in the main directory, and then add a AUTO.ini configuration file in this folder. As long as consistent with the preparation of the rules of AUTO.ini, it will become a automatic and runnable project in Jenkins.
+#####Just add a folder(such as: ExampleScript) in the main directory, and then add a AUTO.ini configuration file in this folder. As long as consistent with the preparation of the rules of AUTO.ini, it will become a automatic and runnable project in Jenkins.
 
 ##AUTO.ini
+####
 [DEFAULT]
 Name = Hello Script
 Maintainer = tangcaijun@foxmail.com
@@ -16,3 +17,4 @@ EXUCMD = python3 check.py
 
 [SYSTEM]
 Enable = 0  -- this project will be closed by set "Enable = 0"
+####
