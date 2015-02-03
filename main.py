@@ -95,8 +95,8 @@ class AutoScript(object):
 
         # mailing property
 
-        #self.mailingPropertyPath = "/home/isobuilder/.cache/jenkins/workspace/AutoScriptProperty/property.ini"
-        self.mailingPropertyPath = "./property.ini"
+        self.mailingPropertyPath = "/home/isobuilder/.cache/jenkins/workspace/AutoScriptProperty/property.ini"
+        #self.mailingPropertyPath = "./property.ini"
         (self.smtpserver, self.username, self.password,
          self.sender) = self.getMailingProperty()
 
