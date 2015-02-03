@@ -32,11 +32,14 @@ class AutoSoftwareCenter(object):
             "db/software/software.db": (
                 "software",)}
 
-        self.recordFile = open("DeepinSC-Missed-Pkgs.rd", "w")
+        self.recordFile = open("DeepinSC-Missed-Pkgs.log", "w")
         self.unmetPkgs = set()
 
         self.check_database()
+
         self.recordFile.close()
+
+        self.cleanWorkSpace()
 
         if len(self.unmetPkgs) > 0:
             # trigger the mailing event
@@ -92,6 +95,13 @@ class AutoSoftwareCenter(object):
     def record(self, pkgName):
         data = "%s\n" % pkgName
         self.recordFile.write(data)
+
+    def cleanWorkSpace(self):
+        try:
+            subprocess.call(["bash", "clean.sh"])
+        except Exception as e:
+            #raise e
+            pass
 
 if __name__ == "__main__":
     asc = AutoSoftwareCenter()

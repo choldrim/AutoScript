@@ -94,10 +94,11 @@ class AutoScript(object):
     def __init__(self):
 
         # mailing property
-        self.mailingPropertyPath = "/home/isobuilder/.cache/jenkins/workspace/AutoScriptProperty/property.ini"
-        #self.mailingPropertyPath = "./property.ini"
+        #self.mailingPropertyPath = "/home/isobuilder/.cache/jenkins/workspace/AutoScriptProperty/property.ini"
+        self.mailingPropertyPath = "./MailingProperty.ini"
         (self.smtpserver, self.username, self.password,
          self.sender) = self.getMailingProperty()
+        self.subjectPrefix = "Deepin-CI/AutoScript"
 
         # mailing
         self.smtp = smtplib.SMTP()
@@ -108,11 +109,10 @@ class AutoScript(object):
         self.propertyFileName = "AUTO.ini"
         self.allProjects = self.getAllProjects()
 
-        self.projectOutputFile = "__OUTPUT__.log" 
+        self.projectOutputFile = "__AUTO_OUTPUT__.LOG"
 
         # start
         self.work(self.allProjects)
-
 
     def getMailingProperty(self):
         config = configparser.ConfigParser()
@@ -153,7 +153,7 @@ class AutoScript(object):
                 print("Script: %s, excuted successfully!" % (project.name))
             except subprocess.CalledProcessError as e:
                 print("Script: %s, excuted fail!" % (project.name))
-                print("Script output: %s" % e.output)
+                #print("Script output: %s" % str(e.output))
                 with open(self.projectOutputFile, "w") as f:
                     f.write(str(e.output))
                 failProjects.append(project)
@@ -161,39 +161,84 @@ class AutoScript(object):
         # send mails
         if len(failProjects) > 0:
             for project in failProjects:
-                print("Protject(%s) is sending mail" % project.name)
-                self.sendMail(project)
+                print()
+                print("=========================")
+                print(
+                    "Handle failed protject: %s\n sending mail..." %
+                    project.name)
+                self.handleFailProject(project)
+                print("=========================")
 
-    def sendMail(self, project):
-        # collect the attach
-        msgRoot = MIMEMultipart("related")
-        msgRoot["Subject"] = "Deepin-CI/AutoScript: %s" % project.name
-        sendFiles = list(filter(lambda f: len(f) > 0, \
+    def handleFailProject(self, project):
+        sendFiles = list(filter(lambda f: len(f) > 0,
                                 project.sendFile.split(" ")))
         sendFiles.append(self.projectOutputFile)
-        print(sendFiles)
+        sendFiles = list(
+            map(lambda f: os.path.join(project.path, f), sendFiles))
         for sendFile in sendFiles:
-            try:
-                att = MIMEText(open(os.path.join(project.path, sendFile),
-                                "r").read(), "base64", "utf-8")
-            # not found sendingFile
-            except OSError as e:
-                if e.errno == e.errno.ENOENT:
-                    err = " Script %s Err:" % project.name
-                    err = " SendingFile: %s can't be found."% (sendFile)
-                    print(err)
-                    self.smtp.sendmail(self.sender, project.maintainer, err)
-                raise e
+            if not os.path.exists(sendFile):
+                # not found sendingFile
+                err = " Posting file can not be found: %s"\
+                    % os.path.basename(sendFile)
+                print(err)
+                print(" sending err to maintainer...")
+                self.sendMail(
+                    project.maintainer,
+                    subject=project.name,
+                    msg=err,
+                    fileList=[
+                        os.path.join(
+                            project.path,
+                            self.projectOutputFile)]
+                )
 
+                print(" finish sending, return")
+
+                # skip the rest of actions
+                return
+
+        self.sendMail(
+            subject=project.name,
+            receiver=project.cclist,
+            fileList=sendFiles)
+
+    def sendMail(
+            self, receiver, msg=None, subject=None, sender=None, fileList=[]):
+
+        if sender is None:
+            sender = self.sender
+
+        # collect the attach
+        msgRoot = MIMEMultipart("alternative")
+        msgRoot["Subject"] = "%s: %s" % (self.subjectPrefix, subject)
+
+        # attach msg
+        msgPart = MIMEText(msg + "<br>", "html", "utf-8")
+        msgRoot.attach(msgPart)
+
+        # attache file
+        for sendFile in fileList:
+            with open(sendFile) as f:
+                att = MIMEText(f.read(), "base64", "utf-8")
             att["Content-Type"] = "application/octet-stream"
             att["Content-Disposition"] = 'attachment; filename="%s"'\
-                % sendFile
+                % os.path.basename(sendFile)
             msgRoot.attach(att)
 
-        cclist = list(filter(lambda address: len(address) > 0,
-                             project.cclist.split(";")))
-        self.smtp.sendmail(self.sender, cclist, msgRoot.as_string())
-        print("Mail: successfully")
+        footer = """
+        <br><hr>
+        <footer>
+          <br>
+          <p>Posted by: <a href="https://ci.deepin.io/job/AutoScript/">ci.deepin.io/job/AutoScript</a></p>
+          <p>Contact information: <a href="mailto:tangcaijun@linuxdeepin.com">tangcaijun@linuxdeepin.com</a></p>
+        </footer>
+        """
+        signPart = MIMEText(footer, "html", "utf-8")
+        msgRoot.attach(signPart)
+
+        self.smtp.sendmail(self.sender, receiver, msgRoot.as_string())
+        print(" mailing successfully")
+
 
 if __name__ == "__main__":
     autoscript = AutoScript()
