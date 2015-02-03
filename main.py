@@ -94,7 +94,6 @@ class AutoScript(object):
     def __init__(self):
 
         # mailing property
-
         self.mailingPropertyPath = "/home/isobuilder/.cache/jenkins/workspace/AutoScriptProperty/property.ini"
         #self.mailingPropertyPath = "./property.ini"
         (self.smtpserver, self.username, self.password,
@@ -174,8 +173,18 @@ class AutoScript(object):
         sendFiles.append(self.projectOutputFile)
         print(sendFiles)
         for sendFile in sendFiles:
-            att = MIMEText(open(os.path.join(project.path, sendFile),
+            try:
+                att = MIMEText(open(os.path.join(project.path, sendFile),
                                 "r").read(), "base64", "utf-8")
+            # not found sendingFile
+            except OSError as e:
+                if e.errno == e.errno.ENOENT:
+                    err = " Script %s Err:" % project.name
+                    err = " SendingFile: %s can't be found."% (sendFile)
+                    print(err)
+                    self.smtp.sendmail(self.sender, project.maintainer, err)
+                raise e
+
             att["Content-Type"] = "application/octet-stream"
             att["Content-Disposition"] = 'attachment; filename="%s"'\
                 % sendFile
