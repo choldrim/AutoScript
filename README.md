@@ -8,13 +8,13 @@
 ##AUTO.ini
 ####
 [DEFAULT]
-Name = Hello Script 
-Maintainer = tangcaijun@foxmail.com 
-CCList = 2013360448@qq.com;tangcaijun@linuxdeepin.com; 
-SendFile = output.log hello.txt 
-Period = H H(0-6) * * * 
-EXUCMD = python3 check.py 
- 
-[SYSTEM] 
-Enable = 0  -- this project will be closed by set "Enable = 0" 
+Name = Hello Script  
+Maintainer = tangcaijun@foxmail.com  
+CCList = 2013360448@qq.com;tangcaijun@linuxdeepin.com;  
+SendFile = output.log hello.txt  
+Period = H H(0-6) * * *  
+EXUCMD = python3 check.py  
+  
+[SYSTEM]  
+Enable = 0  -- this project will be closed by set "Enable = 0"  
 ####
