@@ -94,8 +94,8 @@ class AutoScript(object):
     def __init__(self):
 
         # mailing property
-        #self.mailingPropertyPath = "/home/isobuilder/.cache/jenkins/workspace/AutoScriptProperty/property.ini"
-        self.mailingPropertyPath = "./MailingProperty.ini"
+        self.mailingPropertyPath = "/home/isobuilder/.cache/jenkins/workspace/AutoScriptProperty/property.ini"
+        #self.mailingPropertyPath = "./MailingProperty.ini"
         (self.smtpserver, self.username, self.password,
          self.sender) = self.getMailingProperty()
         self.subjectPrefix = "Deepin-CI/AutoScript"
