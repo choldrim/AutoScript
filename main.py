@@ -95,7 +95,8 @@ class AutoScript(object):
 
         # mailing property
         self.mailingPropertyPath = "/home/isobuilder/.cache/jenkins/workspace/AutoScriptProperty/property.ini"
-        #self.mailingPropertyPath = "./MailingProperty.ini"
+        if not os.path.exists(self.mailingPropertyPath):
+            self.mailingPropertyPath = "./MailingProperty.ini"
         (self.smtpserver, self.username, self.password,
          self.sender) = self.getMailingProperty()
         self.subjectPrefix = "Deepin-CI/AutoScript"
@@ -149,10 +150,11 @@ class AutoScript(object):
             print("cmd:", project.exucmd)
             os.chdir(project.path)
             try:
-                debug = open(self.projectOutputFile, "w")
+                debug = open(self.projectOutputFile, "a")
                 output = subprocess.check_output(project.exucmd.split(" "), stderr=debug)
                 print(output, file=debug)
                 print("Script: %s, excuted successfully!" % (project.name))
+                debug.close()
             except subprocess.CalledProcessError as e:
                 print("Script: %s, return non-zero" % (project.name))
                 debug.write(str(e.output))

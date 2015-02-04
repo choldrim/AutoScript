@@ -4,6 +4,7 @@
 import apt
 import apt_pkg
 import sqlite3
+from urllib import request
 
 import subprocess
 import tarfile
@@ -18,6 +19,9 @@ class AutoSoftwareCenter(object):
     """
 
     def __init__(self):
+
+        self.deepinSCVersion = "3.0.1+20141230125726~0565641e10"
+        self.deepinSCUrl = "http://packages.linuxdeepin.com/deepin/pool/main/d/deepin-software-center-data/deepin-software-center-data_%s.tar.gz" % self.deepinSCVersion
 
         # clean workspace
         #self.readyWorkSpace()
@@ -60,14 +64,26 @@ class AutoSoftwareCenter(object):
 
     def readyDatabase(self):
         try:
-            subprocess.check_output(
-                ["apt-get", "source", "deepin-software-center-data"])
-            verStr = self.apt_cache[
-                "deepin-software-center-data"].candidate.version
+            #subprocess.check_output(
+            #    ["apt-get", "source", "deepin-software-center-data"])
+            #verStr = self.apt_cache[
+            #    "deepin-software-center-data"].candidate.version
+            response = request.urlopen(self.deepinSCUrl)
+            data = response.read()
+            response.close()
+            fileName = "deepin-software-center-data.tar.gz"
+            with open(fileName, "wb") as f:
+                f.write(data)
+
+            # tar download file
+            with tarfile.open(fileName) as tar:
+                tar.extractall()
+
+            # extract the database
             dbPath = os.path.join(
                 os.getcwd(),
                 "deepin-software-center-data-" +
-                verStr)
+                self.deepinSCVersion)
             dbPath = os.path.join(os.path.join(dbPath, "data"), "origin")
 
             with tarfile.open(os.path.join(dbPath, "dsc-software-data.tar.gz")) as tar:
@@ -76,7 +92,7 @@ class AutoSoftwareCenter(object):
             with tarfile.open(os.path.join(dbPath, "dsc-desktop-data.tar.gz")) as tar:
                 tar.extract("desktop/desktop2014.db", "db/")
 
-        except subprocess.CalledProcessError as e:
+        except request.URLError as e:
             print("Can't get software-center-data, abort.")
             print("Err:\n %s" % e.output)
             raise e
