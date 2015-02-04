@@ -150,14 +150,15 @@ class AutoScript(object):
             print("cmd:", project.exucmd)
             os.chdir(project.path)
             try:
-                debug = open(self.projectOutputFile, "a")
+                debug = open(self.projectOutputFile, "w")
                 output = subprocess.check_output(project.exucmd.split(" "), stderr=debug)
-                print(output, file=debug)
-                print("Script: %s, excuted successfully!" % (project.name))
+                debug.write(output.decode("utf-8"))
                 debug.close()
+                print("Script: %s, excuted successfully!" % (project.name))
             except subprocess.CalledProcessError as e:
                 print("Script: %s, return non-zero" % (project.name))
-                debug.write(str(e.output))
+                debug.write(e.output.decode("utf-8"))
+                debug.close()
                 failProjects.append(project)
 
         # send mails

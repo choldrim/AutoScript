@@ -47,7 +47,7 @@ class AutoSoftwareCenter(object):
         self.recordFile.close()
 
         # clean work space
-        #self.cleanWorkSpace()
+        self.cleanWorkSpace()
 
         if len(self.unmetPkgs) > 0:
             # trigger the mailing event
