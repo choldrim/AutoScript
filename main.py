@@ -149,25 +149,25 @@ class AutoScript(object):
             print("cmd:", project.exucmd)
             os.chdir(project.path)
             try:
-                subprocess.check_output(project.exucmd.split(" "))
+                debug = open(self.projectOutputFile, "w")
+                output = subprocess.check_output(project.exucmd.split(" "), stderr=debug)
+                print(output, file=debug)
                 print("Script: %s, excuted successfully!" % (project.name))
             except subprocess.CalledProcessError as e:
-                print("Script: %s, excuted fail!" % (project.name))
-                #print("Script output: %s" % str(e.output))
-                with open(self.projectOutputFile, "w") as f:
-                    f.write(str(e.output))
+                print("Script: %s, return non-zero" % (project.name))
+                debug.write(str(e.output))
                 failProjects.append(project)
 
         # send mails
         if len(failProjects) > 0:
             for project in failProjects:
                 print()
-                print("=========================")
+                print("=" * 60)
                 print(
                     "Handle failed protject: %s\n sending mail..." %
                     project.name)
                 self.handleFailProject(project)
-                print("=========================")
+                print("=" * 60)
 
     def handleFailProject(self, project):
         sendFiles = list(filter(lambda f: len(f) > 0,
@@ -203,7 +203,7 @@ class AutoScript(object):
             fileList=sendFiles)
 
     def sendMail(
-            self, receiver, msg=None, subject=None, sender=None, fileList=[]):
+            self, receiver, msg="", subject="", sender=None, fileList=[]):
 
         if sender is None:
             sender = self.sender
@@ -213,7 +213,7 @@ class AutoScript(object):
         msgRoot["Subject"] = "%s: %s" % (self.subjectPrefix, subject)
 
         # attach msg
-        msgPart = MIMEText(msg + "<br>", "html", "utf-8")
+        msgPart = MIMEText("%s%s" %(msg, "<br>"), "html", "utf-8")
         msgRoot.attach(msgPart)
 
         # attache file

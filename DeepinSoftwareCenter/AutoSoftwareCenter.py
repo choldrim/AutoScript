@@ -4,10 +4,10 @@
 import apt
 import apt_pkg
 import sqlite3
+
 import subprocess
 import tarfile
 import os
-
 
 class AutoSoftwareCenter(object):
 
@@ -18,6 +18,9 @@ class AutoSoftwareCenter(object):
     """
 
     def __init__(self):
+
+        # clean workspace
+        #self.readyWorkSpace()
 
         self.apt_cache = apt.cache.Cache()
         self.pkg_cache = apt_pkg.Cache()
@@ -39,13 +42,21 @@ class AutoSoftwareCenter(object):
 
         self.recordFile.close()
 
-        self.cleanWorkSpace()
+        # clean work space
+        #self.cleanWorkSpace()
 
         if len(self.unmetPkgs) > 0:
             # trigger the mailing event
             quit(1)
 
         quit(0)
+
+    def readyWorkSpace(self):
+        try:
+            subprocess.call(["bash", "BeforeRun.sh"])
+        except Exception as e:
+            #raise e
+            pass
 
     def readyDatabase(self):
         try:
@@ -98,7 +109,7 @@ class AutoSoftwareCenter(object):
 
     def cleanWorkSpace(self):
         try:
-            subprocess.call(["bash", "clean.sh"])
+            subprocess.call(["bash", "AfterRun.sh"])
         except Exception as e:
             #raise e
             pass

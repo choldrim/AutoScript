@@ -1,4 +1,5 @@
 #!/bin/bash
 
-# clean
-rm -r db deepin-software-center-data*
+rm -rf deepin-software-center-data*
+rm -rf db
+rm DeepinSC-Missed-Pkgs.log
