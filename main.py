@@ -153,6 +153,7 @@ class AutoScript(object):
             try:
                 debug = open(self.projectOutputFile, "w")
                 debug.write(str(datetime.now()))
+                debug.flush()
                 output = subprocess.check_output(project.exucmd.split(" "), stderr=debug)
                 debug.write(output.decode("utf-8"))
                 debug.close()
