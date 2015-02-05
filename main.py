@@ -175,6 +175,7 @@ class AutoScript(object):
                 print("=" * 60)
 
     def handleFailProject(self, project):
+        """
         sendFiles = project.sendFile
         sendFiles.append(self.projectOutputFile)
         sendFiles = list(
@@ -200,11 +201,17 @@ class AutoScript(object):
 
                 # skip the rest of actions
                 return
+        """
 
         self.sendMail(
+            msg="""
+            % Script return non-zero <br>
+            please see workspace <a href="https://ci.deepin.io/job/AutoScript/ws/DeepinSoftwareCenter/">
+            https://ci.deepin.io/job/AutoScript/ws/DeepinSoftwareCenter/</a>
+            """ % project.name,
             subject=project.name,
-            receiver=project.cclist,
-            fileList=sendFiles)
+            receiver=project.cclist
+            )
 
     def sendMail(
             self, receiver, msg="", subject="", sender=None, fileList=[]):
