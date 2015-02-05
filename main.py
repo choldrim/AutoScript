@@ -3,12 +3,12 @@
 
 import os
 import configparser
+import datetime
 import subprocess
 import smtplib
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.mime.image import MIMEImage
 
 
 class Project(object):
@@ -151,6 +151,7 @@ class AutoScript(object):
             os.chdir(project.path)
             try:
                 debug = open(self.projectOutputFile, "w")
+                debug.write(str(datetime.now()))
                 output = subprocess.check_output(project.exucmd.split(" "), stderr=debug)
                 debug.write(output.decode("utf-8"))
                 debug.close()
