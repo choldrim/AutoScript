@@ -1,13 +1,9 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
-import apt
-import apt_pkg
 import sqlite3
-from urllib import request
 
 import subprocess
-import tarfile
 import os
 
 class AutoSoftwareCenter(object):
@@ -18,19 +14,13 @@ class AutoSoftwareCenter(object):
         this must be run in a machine with a official source_list
     """
 
-    def __init__(self):
-
-        self.deepinSCVersion = "3.0.1+20141230125726~0565641e10"
-        self.deepinSCUrl = "http://packages.linuxdeepin.com/deepin/pool/main/d/deepin-software-center-data/deepin-software-center-data_%s.tar.gz" % self.deepinSCVersion
+    def __init__(self, packageFilesPath):
 
         # clean workspace
         #self.readyWorkSpace()
 
-        self.apt_cache = apt.cache.Cache()
-        self.pkg_cache = apt_pkg.Cache()
-
-        # get and un-tar the newest software-center-database
-        self.readyDatabase()
+        self.packageFilesPath = packageFilesPath
+        self.allValidPackages = self.getAllValidPackages(self.packageFilesPath)
 
         # map:  database => tables
         self.databases = {
@@ -39,7 +29,10 @@ class AutoSoftwareCenter(object):
             "db/software/software.db": (
                 "software",)}
 
-        self.recordFile = open("DeepinSC-Missed-Pkgs.log", "w")
+        self.recordFile = open(os.path.join(os.getcwd(),\
+                        os.path.join("Output_AllMissPkgs", "%s.rd" % \
+                            os.path.basename(self.packageFilesPath))), "w")
+
         self.unmetPkgs = set()
 
         self.check_database()
@@ -47,7 +40,7 @@ class AutoSoftwareCenter(object):
         self.recordFile.close()
 
         # clean work space
-        self.cleanWorkSpace()
+        #self.cleanWorkSpace()
 
         if len(self.unmetPkgs) > 0:
             # trigger the mailing event
@@ -60,42 +53,34 @@ class AutoSoftwareCenter(object):
             subprocess.call(["bash", "BeforeRun.sh"])
         except Exception as e:
             #raise e
-            pass
+            print(e)
 
-    def readyDatabase(self):
-        try:
-            #subprocess.check_output(
-            #    ["apt-get", "source", "deepin-software-center-data"])
-            #verStr = self.apt_cache[
-            #    "deepin-software-center-data"].candidate.version
-            response = request.urlopen(self.deepinSCUrl)
-            data = response.read()
-            response.close()
-            fileName = "deepin-software-center-data.tar.gz"
-            with open(fileName, "wb") as f:
-                f.write(data)
+    def getAllValidPackages(self, listsPath):
+        allValidPackages = set()
+        for packageFile in os.listdir(listsPath):
+            packageFile = os.path.join(listsPath, packageFile)
+            print(packageFile)
+            with open(packageFile) as f:
+                packageName = ""
+                while True:
+                    line = f.readline()
+                    if len(line) == 0:
+                        break
+                    if line.startswith("Package: "):
+                        packageName = line.split("Package: ")[1].strip()
+                    if line.startswith("Architecture: "):
+                        arch = line.split("Architecture: ")[1].strip()
+                        # all
+                        if arch == "all":
+                            packageNameI386 = packageName + ":i386"
+                            allValidPackages.add(packageNameI386)
+                            packageNameAmd64 = packageName + ":amd64"
+                            allValidPackages.add(packageNameAmd64)
+                        # amd64 or i386
+                        packageName += ":" + arch
+                        allValidPackages.add(packageName)
+        return allValidPackages
 
-            # tar download file
-            with tarfile.open(fileName) as tar:
-                tar.extractall()
-
-            # extract the database
-            dbPath = os.path.join(
-                os.getcwd(),
-                "deepin-software-center-data-" +
-                self.deepinSCVersion)
-            dbPath = os.path.join(os.path.join(dbPath, "data"), "origin")
-
-            with tarfile.open(os.path.join(dbPath, "dsc-software-data.tar.gz")) as tar:
-                tar.extract("software/software.db", "db/")
-
-            with tarfile.open(os.path.join(dbPath, "dsc-desktop-data.tar.gz")) as tar:
-                tar.extract("desktop/desktop2014.db", "db/")
-
-        except request.URLError as e:
-            print("Can't get software-center-data, abort.")
-            print("Err:\n %s" % e.output)
-            raise e
 
     def check_database(self):
         for dbName in self.databases:
@@ -108,13 +93,22 @@ class AutoSoftwareCenter(object):
                 print("%s packages: %d" % (dbName, len(pkgNames)))
                 for pkgName in pkgNames:
                     pkgName = pkgName[0]
-                    if pkgName not in self.apt_cache:
-                        # check if there is 32bit pkg
-                        if not pkgName.endswith(":i386"):
-                            if pkgName + ":i386" in self.apt_cache:
-                                continue
-                        #print (pkgName)
+                    # i386
+                    if pkgName.endswith(":i386") and \
+                       pkgName not in self.allValidPackages:
                         self.unmetPkgs.add(pkgName)
+                    # amd64
+                    elif pkgName.endswith(":amd64") and \
+                            pkgName not in self.allValidPackages:
+                        self.unmetPkgs.add(pkgName)
+                    # all
+                    else:
+                        pkgNameAmd64 = pkgName + ":amd64"
+                        if pkgNameAmd64 not in self.allValidPackages:
+                            pkgNameI386 = pkgName + ":I386"
+                            if pkgNameI386 not in self.allValidPackages:
+                                self.unmetPkgs.add(pkgName)
+
         print("all unmet packages: %d" % len(self.unmetPkgs))
         for name in self.unmetPkgs:
             self.record(name)
@@ -127,8 +121,13 @@ class AutoSoftwareCenter(object):
         try:
             subprocess.call(["bash", "AfterRun.sh"])
         except Exception as e:
+            print(e)
             #raise e
             pass
 
 if __name__ == "__main__":
-    asc = AutoSoftwareCenter()
+    
+    #path = "/home/choldrim/SRC/PYTHON/DeepinSoftwareCenter/PackageLists/北京交通大学"
+    
+    path = "/home/choldrim/SRC/PYTHON/DeepinSoftwareCenter/PackageLists/Piotrkosoft.net (http)/"
+    asc = AutoSoftwareCenter(path)
