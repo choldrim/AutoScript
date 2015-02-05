@@ -205,7 +205,7 @@ class AutoScript(object):
 
         self.sendMail(
             msg="""
-            % Script return non-zero <br>
+            %s Script return non-zero <br>
             please see workspace <a href="https://ci.deepin.io/job/AutoScript/ws/DeepinSoftwareCenter/">
             https://ci.deepin.io/job/AutoScript/ws/DeepinSoftwareCenter/</a>
             """ % project.name,
