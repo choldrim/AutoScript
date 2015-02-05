@@ -3,9 +3,10 @@
 
 import os
 import configparser
-import datetime
 import subprocess
 import smtplib
+
+from datetime import datetime
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
