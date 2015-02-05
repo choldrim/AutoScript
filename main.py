@@ -19,9 +19,9 @@ class Project(object):
         self._path = path
         self._exucmd = exucmd
         self._maintainer = maintainer
-        self._cclist = cclist
+        self._cclist = [cc.strip() for cc in cclist.split(",") if len(cc) > 0]
         self._period = period
-        self._sendFile = sendFile
+        self._sendFile = [f.strip() for f in sendFile.split(",") if len(f) > 0]
         self._outputLog = ""
 
     @property
@@ -173,8 +173,7 @@ class AutoScript(object):
                 print("=" * 60)
 
     def handleFailProject(self, project):
-        sendFiles = list(filter(lambda f: len(f) > 0,
-                                project.sendFile.split(" ")))
+        sendFiles = project.sendFile
         sendFiles.append(self.projectOutputFile)
         sendFiles = list(
             map(lambda f: os.path.join(project.path, f), sendFiles))
