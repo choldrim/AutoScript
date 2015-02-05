@@ -17,6 +17,8 @@ class SourcelistObject(object):
             print(sourceLine)
             quit(1)
         url = items[1]
+        if url.endswith("/"):
+            url = url[:-1]
         codeName = items[2]
         components = items[3:]
         

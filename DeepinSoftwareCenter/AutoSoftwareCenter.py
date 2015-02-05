@@ -42,11 +42,13 @@ class AutoSoftwareCenter(object):
         # clean work space
         #self.cleanWorkSpace()
 
+        """
         if len(self.unmetPkgs) > 0:
             # trigger the mailing event
             quit(1)
 
         quit(0)
+        """
 
     def readyWorkSpace(self):
         try:

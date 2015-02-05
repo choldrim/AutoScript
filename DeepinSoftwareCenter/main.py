@@ -31,3 +31,6 @@ if __name__ == "__main__":
     ready.readySourceListEnv()
 
     cleanWorkSpace()
+
+    # trig the mailing event
+    quit(1)
