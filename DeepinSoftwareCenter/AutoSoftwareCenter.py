@@ -126,8 +126,8 @@ class AutoSoftwareCenter(object):
             pass
 
 if __name__ == "__main__":
-    
+    pass
     #path = "/home/choldrim/SRC/PYTHON/DeepinSoftwareCenter/PackageLists/北京交通大学"
     
-    path = "/home/choldrim/SRC/PYTHON/DeepinSoftwareCenter/PackageLists/Piotrkosoft.net (http)/"
-    asc = AutoSoftwareCenter(path)
+    #path = "/home/choldrim/SRC/PYTHON/DeepinSoftwareCenter/PackageLists/Piotrkosoft.net (http)/"
+    #asc = AutoSoftwareCenter(path)
