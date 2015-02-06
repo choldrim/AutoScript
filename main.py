@@ -103,27 +103,30 @@ class AutoScript(object):
         self.subjectPrefix = "Deepin-CI/AutoScript"
 
         # mailing
+        """
         self.smtp = smtplib.SMTP()
         if not self.readyMailingService(self.smtpserver, self.username, self.password):
             quit(1)
         print("SMTP Service is ready!")
+        """
 
         self.propertyFileName = "AUTO.ini"
         self.allProjects = self.getAllProjects()
 
-        self.projectOutputFile = "__AUTO_OUTPUT__.LOG"
+        self.projectOutputFile = "__SCRIPT_OUTPUT__.LOG"
 
         # start
         self.work(self.allProjects)
 
-    def readyMailingService(self, server, name, pwd):
+    def getMailingServiceInstance(self):
         try:
-            self.smtp.connect(server)
-            self.smtp.login(name, pwd)
-            self.smtp.helo()
-            return True
+            smtp = smtplib.SMTP()
+            smtp.connect(self.smtpserver)
+            smtp.login(self.username, self.password)
+            smtp.helo()
+            return 
         except Exception as e:
-            print("ready mailing service fail")
+            print("get mailing service fail")
             raise e
        
 
@@ -218,7 +221,7 @@ class AutoScript(object):
         self.sendMail(
             msg="""
             %s Script return non-zero <br>
-            please see workspace <a href="https://ci.deepin.io/job/AutoScript/ws/DeepinSoftwareCenter/">
+            see workspace <a href="https://ci.deepin.io/job/AutoScript/ws/DeepinSoftwareCenter/">
             https://ci.deepin.io/job/AutoScript/ws/DeepinSoftwareCenter/</a>
             """ % project.name,
             subject=project.name,
@@ -260,15 +263,21 @@ class AutoScript(object):
         msgRoot.attach(signPart)
 
         try:
-            self.smtp.sendmail(self.sender, receiver, msgRoot.as_string())
-        except smtplib.SMTPServerDisconnected as e:
+            smtp = self.getMailingServerInstance()
+            smtp.sendmail(self.sender, receiver, msgRoot.as_string())
+            smtp.quit()
+        except (smtplib.SMTPServerDisconnected, smtplib.SMTPSenderRefused)\
+               as e:
             print(e)
+            raise e
+        """
             print("try to connect again ... ")
             if not self.readyMailingService(self.smtpserver, self.username, self.password):
                 print("can not connect to mailing server, abort.")
                 raise e
                 quit(1)
             self.smtp.sendmail(self.sender, receiver, msgRoot.as_string())
+        """
 
         print(" mailing successfully")
 
