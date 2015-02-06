@@ -120,6 +120,7 @@ class AutoScript(object):
         try:
             self.smtp.connect(server)
             self.smtp.login(name, pwd)
+            self.smtp.helo()
             return True
         except Exception as e:
             print("ready mailing service fail")
