@@ -5,6 +5,7 @@ import sqlite3
 
 import subprocess
 import os
+import sys
 
 class AutoSoftwareCenter(object):
 
@@ -59,7 +60,9 @@ class AutoSoftwareCenter(object):
 
     def getAllValidPackages(self, listsPath):
         allValidPackages = set()
-        for packageFile in os.listdir(listsPath):
+        packageFiles = [f for f in os.listdir(listsPath)\
+                        if f.endswith("Packages")]
+        for packageFile in packageFiles:
             packageFile = os.path.join(listsPath, packageFile)
             print(packageFile)
             with open(packageFile) as f:
@@ -130,6 +133,6 @@ class AutoSoftwareCenter(object):
 if __name__ == "__main__":
     pass
     #path = "/home/choldrim/SRC/PYTHON/DeepinSoftwareCenter/PackageLists/北京交通大学"
-    
     #path = "/home/choldrim/SRC/PYTHON/DeepinSoftwareCenter/PackageLists/Piotrkosoft.net (http)/"
-    #asc = AutoSoftwareCenter(path)
+    path = sys.argv[1]
+    asc = AutoSoftwareCenter(path)

@@ -111,7 +111,8 @@ class AutoScript(object):
         """
 
         self.propertyFileName = "AUTO.ini"
-        self.allProjects = self.getAllProjects()
+        self.scriptDir = "Script"
+        self.allProjects = self.getAllProjects(self.scriptDir)
 
         self.projectOutputFile = "__SCRIPT_OUTPUT__.LOG"
 
@@ -136,7 +137,7 @@ class AutoScript(object):
         return config["DEFAULT"]["SMTPServer"], config["DEFAULT"]["UserName"], \
             config["DEFAULT"]["Password"], config["DEFAULT"]["Sender"]
 
-    def getAllProjects(self):
+    def getAllProjects(self, scriptDir):
         allProjects = []
         allDirs = list(map(lambda f: os.path.join(os.getcwd(), f),
                            list(filter(lambda f: os.path.isdir(f),
@@ -263,7 +264,7 @@ class AutoScript(object):
         msgRoot.attach(signPart)
 
         try:
-            smtp = self.getMailingServerInstance()
+            smtp = self.getMailingServiceInstance()
             smtp.sendmail(self.sender, receiver, msgRoot.as_string())
             smtp.quit()
         except (smtplib.SMTPServerDisconnected, smtplib.SMTPSenderRefused)\

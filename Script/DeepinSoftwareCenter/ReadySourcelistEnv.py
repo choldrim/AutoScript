@@ -4,6 +4,7 @@
 from urllib import request
 from urllib.error import HTTPError
 import gzip
+import hashlib
 import os
 
 class SourcelistObject(object):
@@ -13,7 +14,7 @@ class SourcelistObject(object):
     def parse(self, sourceLine):
         items = [i for i in sourceLine.split(" ") if len(i) > 0]
         if len(items) < 4:
-            print("fuck~~~")
+            print("fuck source list~~~")
             print(sourceLine)
             quit(1)
         url = items[1]
@@ -37,6 +38,30 @@ class SourcelistObject(object):
             
         return packageFilesUrl
 
+    # map: packageFileUrl => md5Sum
+    def getMd5sumMap(self): 
+        md5SumsMap = {}
+        codeNameUrl = "%s/dists/%s" % (self.url, self.codeName)
+        releaseFileUrl = "%s/Release" % codeNameUrl
+        print(releaseFileUrl)
+        response = request.urlopen(releaseFileUrl)
+        data = response.read().decode("utf-8")
+        # filter other sum, like sha1...
+        data = data[data.index("MD5Sum:"):data.index("SHA1:")]
+        response.close()
+        for line in data.split("\n"):
+            if line.startswith(" ") and line.endswith("Packages"):
+                items = [x for x in line.split(" ") if len(x) > 0]
+                if len(items) != 3:
+                    continue
+                md5sum = items[0]
+                url = "%s/%s" % (codeNameUrl, items[2])
+                key = url.split("http://")[1].replace("/", "_")
+                md5SumsMap[key] = md5sum
+        print(md5SumsMap)
+        return md5SumsMap
+
+
 ubuntu_source_content_template = [
 "deb %s %s main restricted universe multiverse",
 "deb %s %s-security main restricted universe multiverse",
@@ -57,7 +82,6 @@ deepin_source_content_template = [
 "#deb-src %s %s-updates main universe non-free",
 ]
 
-from aptsources import distro
 import configparser
 def genAllSourcelists():
     # fuck this in debian machine
@@ -89,6 +113,7 @@ def genAllSourcelists():
         with open(sourcePath, "w") as f:
             f.write(sourceContent) 
 
+# return the source list which has been generated
 def getAllSourcelist():
     sourceListPaths = os.listdir("Sourcelists")
     sourceListPaths = [os.path.join(os.path.join(os.getcwd(), "Sourcelists"),\
@@ -97,16 +122,18 @@ def getAllSourcelist():
     
 
 def genPackageFiles(sourcelistPath):
-
     with open(sourcelistPath) as f:
         data = f.read()
 
     lines = [l for l in data.split("\n") if len(l) > 0 and not l.startswith("#")]
 
     packageFilesUrl = []
+    md5SumsMap = {}   # url : md5sum
     for line in lines:
         slo = SourcelistObject(line)
         packageFilesUrl.append(slo.getAllPackageFilesUrl())
+        for (k,v ) in slo.getMd5sumMap().items():
+            md5SumsMap[k] = v
 
     path = os.path.join(os.path.join(os.getcwd(), "PackageLists"), \
                        os.path.basename(sourcelistPath))
@@ -117,18 +144,34 @@ def genPackageFiles(sourcelistPath):
     for sourceGroup in packageFilesUrl:
         for packageFileUrl in sourceGroup:
             try:
-                print("ready:%s" % packageFileUrl)
-                with request.urlopen(packageFileUrl) as response:
-                    data = response.read()
 
                 filePath = os.path.join(path, \
                         packageFileUrl.split("http://")[1].replace("/", "_"))
+                print("ready:%s" % packageFileUrl)
+                print("check md5sum...")
+                if os.path.exists(filePath):
+                    with open(filePath, "rb") as f:
+                        md5sum = hashlib.md5(f.read()).hexdigest()
+                        if md5SumsMap[packageFileUrl] == md5sum:
+                            print (" package file %s is consistent with server file, don't need to update." % packageFileUrl)
+                            continue
+                        else:
+                            print("md5sum is not consistent, update file...")
+                else:
+                    print("package file not exits, download file ... ")
+
+                with request.urlopen(packageFileUrl) as response:
+                    data = response.read()
+
+                # store zip file
                 with open(filePath, "wb") as f:
                     f.write(data)
  
+                # unzip
                 with gzip.open(filePath, "rt") as gz:
                     with open(filePath.split(".gz")[0], "w") as f:
                         f.write(gz.read())
+
             except HTTPError as e:
                 print(e)
                 print(packageFileUrl)
