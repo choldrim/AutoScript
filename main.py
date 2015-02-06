@@ -104,8 +104,8 @@ class AutoScript(object):
 
         # mailing
         self.smtp = smtplib.SMTP()
-        self.smtp.connect(self.smtpserver)
-        self.smtp.login(self.username, self.password)
+        if not self.readyMailingService(self.smtpserver, self.username, self.password):
+            quit(1)
         print("SMTP Service is ready!")
 
         self.propertyFileName = "AUTO.ini"
@@ -115,6 +115,16 @@ class AutoScript(object):
 
         # start
         self.work(self.allProjects)
+
+    def readyMailingService(self, server, name, pwd):
+        try:
+            self.smtp.connect(server)
+            self.smtp.login(name, pwd)
+            return True
+        except Exception as e:
+            print("ready mailing service fail")
+            raise e
+       
 
     def getMailingProperty(self):
         config = configparser.ConfigParser()
@@ -248,7 +258,17 @@ class AutoScript(object):
         signPart = MIMEText(footer, "html", "utf-8")
         msgRoot.attach(signPart)
 
-        self.smtp.sendmail(self.sender, receiver, msgRoot.as_string())
+        try:
+            self.smtp.sendmail(self.sender, receiver, msgRoot.as_string())
+        except smtplib.SMTPServerDisconnected as e:
+            print(e)
+            print("try to connect again ... ")
+            if not self.readyMailingService(self.smtpserver, self.username, self.password):
+                print("can not connect to mailing server, abort.")
+                raise e
+                quit(1)
+            self.smtp.sendmail(self.sender, receiver, msgRoot.as_string())
+
         print(" mailing successfully")
 
 

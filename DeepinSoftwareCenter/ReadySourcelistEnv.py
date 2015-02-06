@@ -60,7 +60,10 @@ deepin_source_content_template = [
 from aptsources import distro
 import configparser
 def genAllSourcelists():
-    codeName = distro.get_distro().codename
+    # fuck this in debian machine
+    #codeName = distro.get_distro().codename
+    codeName = "trusty"
+
     for mirror in os.listdir("Mirrors"):
         if not mirror.endswith(".ini"):
             continue
