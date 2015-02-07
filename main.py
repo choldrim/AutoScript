@@ -142,11 +142,11 @@ class AutoScript(object):
             config["DEFAULT"]["Password"], config["DEFAULT"]["Sender"]
 
     def getAllProjects(self, scriptDir):
+
         allProjects = []
         allDirs =[os.path.join(scriptDir, d) for d in os.listdir(scriptDir) if os.path.isdir(os.path.join(scriptDir, d))]
         proDirs = [d for d in allDirs if self.propertyFileName in os.listdir(d)]
-        #proDirs = list(filter(lambda d: self.propertyFileName in
-        #                      os.listdir(d), allDirs))
+
         for proDir in proDirs:
             config = configparser.ConfigParser()
             config.read(os.path.join(proDir, self.propertyFileName))
@@ -225,9 +225,9 @@ class AutoScript(object):
         self.sendMail(
             msg="""
             %s Script return non-zero <br>
-            see workspace <a href="https://ci.deepin.io/job/AutoScript/ws/DeepinSoftwareCenter/">
-            https://ci.deepin.io/job/AutoScript/ws/DeepinSoftwareCenter/</a>
-            """ % project.name,
+            see workspace <a href="https://ci.deepin.io/job/AutoScript/ws/Script/%s">
+            %s workspace</a>
+            """ % (project.name, os.path.basename(project.path), project.name),
             subject=project.name,
             receiver=project.cclist
             )
