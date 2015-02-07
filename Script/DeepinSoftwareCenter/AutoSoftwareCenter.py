@@ -15,13 +15,13 @@ class AutoSoftwareCenter(object):
         this must be run in a machine with a official source_list
     """
 
-    def __init__(self, packageFilesPath):
+    def __init__(self, packagesFilesListPath, outputDir):
 
         # clean workspace
         #self.readyWorkSpace()
 
-        self.packageFilesPath = packageFilesPath
-        self.allValidPackages = self.getAllValidPackages(self.packageFilesPath)
+        self.packagesFilesListPath = packagesFilesListPath
+        self.allValidPackages = self.getAllValidPackages(self.packagesFilesListPath)
 
         # map:  database => tables
         self.databases = {
@@ -30,9 +30,7 @@ class AutoSoftwareCenter(object):
             "db/software/software.db": (
                 "software",)}
 
-        self.recordFile = open(os.path.join(os.getcwd(),\
-                        os.path.join("Output_AllMissPkgs", "%s.rd" % \
-                            os.path.basename(self.packageFilesPath))), "w")
+        self.recordFile = open("%s.rd" % os.path.join(outputDir, os.path.basename(self.packagesFilesListPath)), "w")
 
         self.unmetPkgs = set()
 

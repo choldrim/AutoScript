@@ -25,6 +25,9 @@ class Project(object):
         self._sendFile = [f.strip() for f in sendFile.split(",") if len(f) > 0]
         self._outputLog = ""
 
+    def __str__(self):
+        return self._name
+
     @property
     def name(self):
         return self._name
@@ -111,7 +114,8 @@ class AutoScript(object):
         """
 
         self.propertyFileName = "AUTO.ini"
-        self.scriptDir = "Script"
+        self.scriptDir = os.path.join(os.getcwd(), "Script")
+        print(self.scriptDir)
         self.allProjects = self.getAllProjects(self.scriptDir)
 
         self.projectOutputFile = "__SCRIPT_OUTPUT__.LOG"
@@ -125,7 +129,7 @@ class AutoScript(object):
             smtp.connect(self.smtpserver)
             smtp.login(self.username, self.password)
             smtp.helo()
-            return 
+            return smtp
         except Exception as e:
             print("get mailing service fail")
             raise e
@@ -139,11 +143,10 @@ class AutoScript(object):
 
     def getAllProjects(self, scriptDir):
         allProjects = []
-        allDirs = list(map(lambda f: os.path.join(os.getcwd(), f),
-                           list(filter(lambda f: os.path.isdir(f),
-                                       os.listdir("./")))))
-        proDirs = list(filter(lambda d: self.propertyFileName in
-                              os.listdir(d), allDirs))
+        allDirs =[os.path.join(scriptDir, d) for d in os.listdir(scriptDir) if os.path.isdir(os.path.join(scriptDir, d))]
+        proDirs = [d for d in allDirs if self.propertyFileName in os.listdir(d)]
+        #proDirs = list(filter(lambda d: self.propertyFileName in
+        #                      os.listdir(d), allDirs))
         for proDir in proDirs:
             config = configparser.ConfigParser()
             config.read(os.path.join(proDir, self.propertyFileName))

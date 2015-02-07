@@ -13,21 +13,24 @@ def readyDatabase():
 
     print("ready data base")
     print("deepin-software-center version:%s" % deepinSCUrl)
-    
-    try:
-        response = request.urlopen(deepinSCUrl)
-        data = response.read()
-        print("finish download")
-        response.close()
 
-    except request.URLError as e:
-        print("Can't get software-center-data, abort.")
-        print("Err:\n %s" % e.output)
-        raise e
+    fileName = "deepin-software-center-data_%s.tar.gz" % deepinSCVersion
+    if not os.path.exists(os.path.join(os.getcwd(), fileName)): 
+        try:
+            response = request.urlopen(deepinSCUrl)
+            data = response.read()
+            print("finish download")
+            response.close()
 
-    fileName = "deepin-software-center-data.tar.gz"
-    with open(fileName, "wb") as f:
-        f.write(data)
+        except request.URLError as e:
+            print("Can't get software-center-data, abort.")
+            print("Err:\n %s" % e.output)
+            raise e
+
+        with open(fileName, "wb") as f:
+            f.write(data)
+    else:
+        print("file %s is exists, skip download." % fileName)
 
     # tar download file
     with tarfile.open(fileName) as tar:
