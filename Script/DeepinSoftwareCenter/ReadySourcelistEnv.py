@@ -14,7 +14,8 @@ from urllib.error import HTTPError, URLError
 packagesListDir = os.path.join(os.getcwd(), "PackagesFilesList")
 sourceslistDir = os.path.join(os.getcwd(), "SourcesList")
 mirrorsListDir = os.path.join(os.getcwd(), "MirrorsList")
-outputDir = os.path.join(os.getcwd(), "Output")
+#outputDir = os.path.join(os.getcwd(), "Output")
+outputDir = os.path.join(os.getcwd(), "CheckedResult")
 
 if not os.path.exists(packagesListDir):
     os.makedirs(packagesListDir)
