@@ -5,9 +5,10 @@ import configparser
 import gzip
 import hashlib
 import os
+import logging
 
 from urllib import request
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 
 
 packagesListDir = os.path.join(os.getcwd(), "PackagesFilesList")
@@ -27,6 +28,12 @@ if not os.path.exists(mirrorsListDir):
 if not os.path.exists(outputDir):
     os.makedirs(outputDir)
 
+
+logging.basicConfig(level=logging.DEBUG,
+                   format="%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s",
+                   datefmt="%d %b %Y %H:%M:%S", 
+                   filename="dsc-checker.log",
+                   filemode="w")
 
 class SourcelistObject(object):
     def __init__(self, sourceLine):
@@ -61,28 +68,45 @@ class SourcelistObject(object):
 
     # map: packageFileUrl => md5Sum
     def getMd5sumMap(self): 
-        md5SumsMap = {}
-        codeNameUrl = "%s/dists/%s" % (self.url, self.codeName)
-        releaseFileUrl = "%s/Release" % codeNameUrl
-        print(releaseFileUrl)
-        response = request.urlopen(releaseFileUrl)
-        data = response.read().decode("utf-8")
-        # filter other sum, like sha1...
-        data = data[data.index("MD5Sum:"):data.index("SHA1:")]
-        response.close()
-        for line in data.split("\n"):
-            if line.startswith(" ") and line.endswith("Packages"):
-                items = [x for x in line.split(" ") if len(x) > 0]
-                if len(items) != 3:
-                    continue
-                md5sum = items[0]
-                url = "%s/%s" % (codeNameUrl, items[2])
-                key = url.split("http://")[1].replace("/", "_")
-                if key in md5SumsMap:
-                    continue
-                md5SumsMap[key] = md5sum
-        #print(md5SumsMap)
-        return md5SumsMap
+        try:
+            print("getting md5 sums from release files:")
+            md5SumsMap = {}
+            codeNameUrl = "%s/dists/%s" % (self.url, self.codeName)
+            releaseFileUrl = "%s/Release" % codeNameUrl
+            print(releaseFileUrl)
+            response = request.urlopen(releaseFileUrl)
+            data = response.read().decode("utf-8")
+            # filter other sum, like sha1...
+            data = data[data.index("MD5Sum:"):data.index("SHA1:")]
+            response.close()
+            for line in data.split("\n"):
+                if line.startswith(" ") and line.endswith("Packages"):
+                    items = [x for x in line.split(" ") if len(x) > 0]
+                    if len(items) != 3:
+                        continue
+                    md5sum = items[0]
+                    url = "%s/%s" % (codeNameUrl, items[2])
+                    key = url.split("http://")[1].replace("/", "_")
+                    if key in md5SumsMap:
+                        continue
+                    md5SumsMap[key] = md5sum
+            #print(md5SumsMap)
+            return md5SumsMap
+        except URLError as e:
+            estr = "err: %s, url: %s" %(str(e), releaseFileUrl)
+            print(estr)
+            logging.error(estr)
+
+        except HTTPError as e:
+            estr = "err: %s, url: %s" %(str(e), releaseFileUrl)
+            print(estr)
+            logging.error(estr)
+
+        except Exception as e:
+            estr = "err: %s, url: %s" %(str(e), releaseFileUrl)
+            print(estr)
+            logging.error(estr)
+            raise e
 
 
 ubuntu_source_content_template = [
@@ -137,17 +161,20 @@ def genAllSourcelists():
 # return the source list which has been generated
 def getAllSourcelist():
     sourceListPaths = os.listdir(sourceslistDir)
-    sourceListPaths = [os.path.join(sourceslistDir, p) for p in sourceListPaths ]
+    sourceListPaths = [os.path.join(sourceslistDir,p)
+                       for p in sourceListPaths
+                       if os.path.isfile(os.path.join(sourceslistDir,p))
+                      ]
     return sourceListPaths
     
-
+from threading import Thread
 def genPackageFiles(sourcelistPath):
 
     # construct packages file list
     with open(sourcelistPath) as f:
         data = f.read()
     lines = [l for l in data.split("\n") if len(l) > 0 and not l.startswith("#")]
-    packageFilesUrl = []
+    packageFilesUrl = [] # == [[pkgFileUrl, pkgFileUrl..], [pkgFileUrl..], ...]
     md5SumsMap = {}   # url : md5sum
     for line in lines:
         slo = SourcelistObject(line)
@@ -161,60 +188,111 @@ def genPackageFiles(sourcelistPath):
         os.makedirs(path)
 
     for sourceGroup in packageFilesUrl:
+        downloadThreads = []
         for packageFileUrl in sourceGroup:
-            try:
+            filePath = os.path.join(path, \
+                    packageFileUrl.split("http://")[1].replace("/", "_"))
+            print("ready:%s" % packageFileUrl)
+            print("check md5sum with file:\n %s" % filePath)
+            if os.path.exists(filePath):
+                with open(filePath, "rb") as f:
+                    md5sum = hashlib.md5(f.read()).hexdigest()
+                    key = os.path.basename(filePath)
+                    if md5SumsMap[key] == md5sum:
+                        print (" package file %s is consistent with server file, don't need to update." % packageFileUrl)
+                        continue
+                    else:
+                        print("md5sum is not consistent, update file...")
+            else:
+                print("package file not exits, download file ... ")
 
-                filePath = os.path.join(path, \
-                        packageFileUrl.split("http://")[1].replace("/", "_"))
-                print("ready:%s" % packageFileUrl)
-                print("check md5sum with file:\n %s" % filePath)
-                if os.path.exists(filePath):
-                    with open(filePath, "rb") as f:
-                        md5sum = hashlib.md5(f.read()).hexdigest()
-                        key = os.path.basename(filePath)
-                        if md5SumsMap[key] == md5sum:
-                            print (" package file %s is consistent with server file, don't need to update." % packageFileUrl)
-                            continue
-                        else:
-                            print("md5sum is not consistent, update file...")
-                else:
-                    print("package file not exits, download file ... ")
+            t = Thread(target=downloadThread, args=(packageFileUrl, filePath,))
+            downloadThreads.append(t)
+            print("start a download new thread...")
+            t.start()
 
-                # download packages.gz
-                packageGZFileUrl = packageFileUrl + ".gz"
-                with request.urlopen(packageGZFileUrl) as response:
-                    data = response.read()
-
-                # store zip file
-                # packages.gz file path
-                fileGZPath = filePath + ".gz"
-                with open(fileGZPath, "wb") as f:
-                    f.write(data)
- 
-                # unzip
-                with gzip.open(fileGZPath, "rt") as gz:
-                    with open(filePath, "w") as f:
-                        f.write(gz.read())
-
-            except HTTPError as e:
-                print(e)
-                print(packageGZFileUrl)
+        for t in downloadThreads:
+            t.join()
 
     # clean
     for fileName in os.listdir(path):
         if fileName.endswith(r".gz"):
             os.remove(os.path.join(path, fileName))
 
+"""
+            # download packages.gz
+            packageGZFileUrl = packageFileUrl + ".gz"
+            with request.urlopen(packageGZFileUrl) as response:
+                data = response.read()
+
+            # store zip file
+            # packages.gz file path
+            fileGZPath = filePath + ".gz"
+            with open(fileGZPath, "wb") as f:
+                f.write(data)
+
+            # unzip
+            with gzip.open(fileGZPath, "rt") as gz:
+                with open(filePath, "w") as f:
+                    f.write(gz.read())
+
+        except HTTPError as e:
+            print(e)
+            print(packageGZFileUrl)
+"""
+    
+def downloadThread(url, filePath):
+    try:
+        packageFileUrl = url
+
+        # download packages.gz
+        packageGZFileUrl = packageFileUrl + ".gz"
+        with request.urlopen(packageGZFileUrl) as response:
+            data = response.read()
+
+        print("finish download package file: %s " % packageFileUrl)
+
+        # store zip file
+        # packages.gz file path
+        fileGZPath = filePath + ".gz"
+        with open(fileGZPath, "wb") as f:
+            f.write(data)
+
+        # unzip
+        with gzip.open(fileGZPath, "rt") as gz:
+            with open(filePath, "w") as f:
+                f.write(gz.read())
+
+    except HTTPError as e:
+        estr = "err: %s, url: %s" % (str(e), packageGZFileUrl)
+        print(estr)
+        logging.error(estr) 
+
+
+from multiprocessing import Process
 from AutoSoftwareCenter import AutoSoftwareCenter
+def checkerProcess(sourcelistPath):
+    genPackageFiles(sourcelistPath)
+    pkgListsPath = os.path.join(packagesListDir, 
+                                os.path.basename(sourcelistPath))
+
+    logging.debug("path: %s" %pkgListsPath)
+
+    print("call AutoSoftwareCenter with: %s" % pkgListsPath)
+    asc = AutoSoftwareCenter(pkgListsPath, outputDir)
+
+
 def readySourceListEnv():
     genAllSourcelists()
+    checkerProcesses = []
     for sourcelistPath in getAllSourcelist():
-        genPackageFiles(sourcelistPath)
-        pkgListsPath = os.path.join(packagesListDir,\
-                                    os.path.basename(sourcelistPath))
-        print("call AutoSoftwareCenter with: %s" % pkgListsPath)
-        asc = AutoSoftwareCenter(pkgListsPath, outputDir)
+        p = Process(target=checkerProcess, args=(sourcelistPath, ))
+        print("start checker process...")
+        p.start()
+        checkerProcesses.append(p)
 
+    for p in checkerProcesses:
+        p.join()
 
 
 if __name__ == '__main__':

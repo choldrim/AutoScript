@@ -29,6 +29,7 @@ if __name__ == "__main__":
 
     db.readyDatabase()
     ready.readySourceListEnv()
+    print("finish all checking")
 
     cleanWorkSpace()
 

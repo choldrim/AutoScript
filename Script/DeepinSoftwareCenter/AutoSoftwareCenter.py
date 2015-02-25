@@ -62,7 +62,7 @@ class AutoSoftwareCenter(object):
                         if f.endswith("Packages")]
         for packageFile in packageFiles:
             packageFile = os.path.join(listsPath, packageFile)
-            print(packageFile)
+            #print(packageFile)
             with open(packageFile) as f:
                 packageName = ""
                 while True:

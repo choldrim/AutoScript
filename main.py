@@ -98,7 +98,7 @@ class AutoScript(object):
     def __init__(self):
 
         # mailing property
-        self.mailingPropertyPath = "/home/isobuilder/.cache/jenkins/workspace/AutoScriptProperty/property.ini"
+        self.mailingPropertyPath = "/home/choldrim/SRC/PYTHON/AutoScript/MailingProperty.ini"
         if not os.path.exists(self.mailingPropertyPath):
             self.mailingPropertyPath = "./MailingProperty.ini"
         (self.smtpserver, self.username, self.password,
