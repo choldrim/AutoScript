@@ -2,10 +2,14 @@
 # coding=utf-8
 
 import subprocess
+import traceback
+import sys
 
 import ReadySourcelistEnv as ready
 import ReadyDatabase as db
 
+errOuputFile = open("STDERR.LOG", "w")
+sys.stderr = errOuputFile
 
 def readyWorkSpace():
     try:
@@ -25,13 +29,17 @@ def cleanWorkSpace():
 
 if __name__ == "__main__":
     
-    readyWorkSpace()
+    try:
+        readyWorkSpace()
 
-    db.readyDatabase()
-    ready.readySourceListEnv()
-    print("finish all checking")
+        db.readyDatabase()
+        ready.readySourceListEnv()
+        print("finish all checking")
 
-    cleanWorkSpace()
+        cleanWorkSpace()
 
-    # trig the mailing event
+    except Exception as e:
+        traceback.print_exc()
+
+    # trig mailing event
     quit(1)

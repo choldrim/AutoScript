@@ -6,6 +6,7 @@ libgnomeprintui2.2-0
 libactiveldap-ruby-doc
 ttf-dzongkha
 biblememorizer
+seafile
 uboot-envtools
 linux-headers-3.8.0-22
 ruby-switch
@@ -113,7 +114,6 @@ libnet-scp-ruby1.9.1
 libmp3info-ruby1.8
 libmyth-0.26-0
 libvalhalla2-dbg
-deepin-system-settings
 deepin-default-settings-zh-hant
 dma-migrate
 teamspeak-server
@@ -310,7 +310,6 @@ libcogl-pango12-dbg
 libgensec0
 libpetsc3.2-dev
 radiance-sse3
-deepin-system-settings-module-network
 liblua5.1-expat-dev
 debtorrent
 libfence4
@@ -348,7 +347,6 @@ libkms1-dbg
 libllvm-2.9-ocaml-dev
 libmetacity-private0
 qtdeclarative5-nemo-qml-plugin-folderlistmodel
-deepin-system-settings-module-mouse
 libpeas-doc-dbgsym
 libactiverecord-ruby1.8
 samba4-testsuite
@@ -469,6 +467,7 @@ kdepimlibs5
 libmixlib-config-ruby
 scilab-scimax
 sword-comm-pers
+dolphin-emu
 liblocale-rails-ruby1.8
 ruby-rails-2.3
 anerd
@@ -625,6 +624,7 @@ mingw32-ocaml
 libmialm2
 banshee-extension-magnatune
 cvs2html
+steam-launcher
 liblua5.1-rings0
 lesstif2-dev
 libopencascade-dev
@@ -687,7 +687,6 @@ libtaoframework-ffmpeg0.4-cil
 libsqlite3-ruby
 checkbox-urwid
 librtas1
-deepin-system-settings-module-account
 postgresql-9.1-pgmp
 libbctsp-java
 evince:i386
@@ -724,7 +723,6 @@ libmemcache-client-ruby1.8
 libstdc++6-4.7-dbg-arm64-cross
 pear-symfony-project-channel
 libxmlrpc-c++4
-deepin-jockey-kde
 libinline-ruby1.8
 libfsotransport-dev
 libgcc-4.7-dev-powerpc-cross
@@ -763,9 +761,8 @@ gambas2-gb-sdl
 libggzmod-dev
 libtransitioner1-dev
 libogre-1.7.4-dbg
-deepin-jockey-gtk
-libruby1.8
 jpilot-backup
+libruby1.8
 tntdb-postgresql3
 doc-linux-text
 ice34-services
@@ -784,12 +781,13 @@ libevs4
 liblua5.1-xmlrpc0
 postgresql-server-dev-9.1
 libdevhelp-3-1
+libimobiledevice-doc
 libqofexpensesobjects-dev
-libstonithd1
 libdebian-packages-compare-perl
 teleport
-epson-escpr
+libstonithd1
 librmagick-ruby
+epson-escpr
 lib64stdc++6-4.7-dbg-powerpc-cross
 isdnactivecards
 uwsgi-plugin-symcall
@@ -872,7 +870,6 @@ libmono-debugger-soft2.0-cil
 libactionpack-ruby
 linux-headers-3.12.0-1-generic
 massif-visualizer
-deepin-system-settings-module-sound
 crossover
 globus-gridmap-callout-error-dbg
 libgnomeprintui2.2-common
@@ -960,7 +957,6 @@ cobalt-panel-utils
 libebml3
 libmenu-cache2
 lib64gfortran3
-deepin-system-settings-module-all
 libgoocanvas-ruby1.8
 python-playerc
 fp-units-fv-2.6.0
@@ -1094,7 +1090,6 @@ balazar
 fonts-lohit-tamil-classical
 kolab-cyrus-pop3d
 libmp3tag-ruby1.9.1
-deepin-system-settings-module-mount-media
 lib64gfortran-4.7-dev-powerpc-cross
 fp-units-i386
 quantum-plugin-openvswitch-agent
@@ -1157,7 +1152,6 @@ libdataobjects-postgres-ruby
 libsbml5-python
 qt5-sdk
 libgtkhtml-4.0-0-dbgsym
-deepin-system-settings-module-power
 glx-alternative-mesa
 cyrus-imapd-2.2
 libgsl-ruby1.9.1
@@ -1250,7 +1244,6 @@ gpe-watch
 liblinebreak2-dev
 shinken-scheduler
 gambas2-gb-desktop
-deepin-system-settings-module-keyboard
 linux-headers-3.8.0-32-lowlatency
 ttf-arphic-gbsn00lp
 libpythonqt2.0
@@ -1291,10 +1284,10 @@ libgjs0c
 kseg
 isdnutils
 evolution-exchange
+rstudio
 gcj-4.6-jre
 libstarpumpi-1.0
 mono-winforms-a11y
-deepin-system-settings-module-tray-power
 liblua5.1-sec1
 libhtml-template-ruby
 libafrodite-0.12-dev
@@ -1365,7 +1358,6 @@ libqt1jsondbpartition1
 sea-defender
 ttf-sil-ezra
 libghc-zeromq-haskell-prof
-deepin-system-settings-module-application-associate
 arcjobtool
 gambas2-gb-image
 ttf-sazanami-mincho
@@ -1492,6 +1484,7 @@ python-goopy
 dict-freedict-wel-eng
 uwsgi-plugin-echo
 libmocha-ruby
+wakfu-speedybird
 ifinnish-small
 jenkins-cli
 liblua5.1-zip-dev
@@ -1638,7 +1631,6 @@ libsamba-hostconfig-dev
 cvsservice
 libccs3
 python3.3-examples
-deepin-system-settings-module-display
 libnet-scp-ruby1.8
 python-packagekit-gtk
 ruby-tmail
@@ -1927,12 +1919,14 @@ ttf-bpg-georgian-fonts
 liblua5.1-oopango-dev
 smuxi-engine-irc
 ri1.8
+synapse
 libmaven-archetype-java
 python-zope.app.apidoc
 linux-tools-3.8.0-23
 libethos-doc
 gir1.2-unique-3.0
 chef-server-api
+nautilus-nutstore
 prime-dict
 librudeconfig-dev
 linux-headers-3.8.0-26-lowlatency
@@ -1963,6 +1957,7 @@ coinor-libcoinutils0-dbg
 libprogressbar-ruby
 seahorse-nautilus-dbgsym
 springseed
+grub-customizer
 libactivesupport-ruby
 libcoin60
 libfssm-ruby1.9.1
@@ -2003,7 +1998,6 @@ gcj-4.7-jre
 ttf-misaki
 libmbt0-dev
 libparsetree-ruby
-deepin-system-settings-module-desktop
 libmsgpack-ruby1.9.1
 libmutter0b
 liblua5.1-zip0
@@ -2204,9 +2198,8 @@ libmpich1.0gf
 slepc3.2-doc
 libggzcore9
 liblua5.1-event0
-dh-deepin-modaliases
-freebsd-sendpr
 unity-lens-help
+freebsd-sendpr
 wine-gecko1.9
 martian-modem-source
 lazarus-doc-0.9.30.4
@@ -2454,6 +2447,7 @@ libtaoframework-ffmpeg-cil-dev
 libghc-testpack-dev
 libamazonec2-ruby
 ttf-jura
+zotero
 itrans
 libkwinactivenvidiahack4
 lib64quadmath0-dbg
@@ -2584,6 +2578,7 @@ gambas2-gb-qt-opengl
 trac-ja-resource
 libnewtonsoft-json4.5-cil
 libglrr-gobject0
+gala-dbg
 kontact-mobile
 libvaladoc0
 llvm-3.2
@@ -2871,10 +2866,10 @@ calligra-l10n-tr
 gmod
 libncurses-ruby1.8
 ghc6-doc
-deepin-system-settings-module-date-time
 libsynce-dbg
 ttf-simkai
 avant-window-navigator
+deepin-hw-detect
 smuxi-engine-twitter
 dict-freedict-hin-eng
 libkgapi0-dbg
@@ -2890,7 +2885,6 @@ libwutil2
 scilab-overload
 libcore-ocaml-doc
 libtioga-ruby1.9.1
-deepin-system-settings-module-a11y
 libspreadsheet-ruby
 libslepc3.2
 ruby-usb
@@ -2904,6 +2898,7 @@ libsdl-ruby1.9.1
 startactive-ksplash-theme
 libosip2-7
 deepin-desktop-environment-desktop
+synapse-dbg
 linux-image-extra-3.8.0-26-generic
 librqrcode-ruby
 lib64gcc-4.7-dev-powerpc-cross
@@ -2973,7 +2968,6 @@ libgcj12
 banshee-extension-foldersync
 libquorum4
 globus-gsi-openssl-error-dbg
-deepin-hw-detect
 nova-xcp-network
 libbox2d0
 libzeroc-ice-ruby1.8
@@ -3071,7 +3065,6 @@ q-tools
 libsystemu-ruby1.8
 libocsync-plugin-owncloud
 libtidy-ruby1.8
-deepin-system-settings-module-driver
 deepin-desktop-environment-dock
 unison2.27.57-gtk
 linux-lowlatency-headers-3.8.0-31
@@ -3096,6 +3089,7 @@ python-geis
 file-roller-dbgsym
 mingw-w64-dev
 epiphany-extensions
+xombrero
 lib64bz2-1.0
 libmaliit-dev
 sdlmame-tools
@@ -3198,6 +3192,7 @@ abuse-lib
 suikyo-table
 librsvg2-ruby1.8
 binutils-gold
+360safeforlinux
 minidlna
 quantum-metadata-agent
 libgcr-3-1-dbgsym
@@ -3279,7 +3274,6 @@ bootcd-ia64
 ttf-inconsolata
 linux-image-3.8.0-27-generic
 libunity-core-6.0-5
-deepin-system-settings-module-bluetooth
 libboost1.53-doc
 libpengine3-dev
 libgnomeprint2.2-doc
@@ -3460,7 +3454,6 @@ libgdk-pixbuf2.0-0-udeb-dbgsym
 e-uae
 lubuntu-elementary-icon-theme
 insanity-tools
-deepin-system-settings-module-individuation
 libxatracker1
 k3dsurf
 audacious-analog-vumeter-plugin-data
@@ -3521,13 +3514,13 @@ firmware-b43-lpphy-installer
 libkrb5-ruby
 xnetcardconfig
 ttf-ecolier-lignes-court
+deepin-sample-music
 libdaemons-ruby
 libboost-thread1.53-dev
 python-wimpiggy
 willowng
 anjuta-dbgsym
 libsimplelist0
-deepin-system-settings-module-system-information
 linux-lowlatency-headers-3.8.0-27
 libfilesystem-ruby1.8
 ttf-sil-padauk
@@ -3552,7 +3545,6 @@ fp-units-multimedia-2.6.0
 libirrlicht1.7a-dbg
 jockey-common
 gfs2-cluster
-deepin-system-settings-module-printer
 netdisco-backend
 libx264-123
 xmp-common
@@ -3607,7 +3599,6 @@ qtnx
 libchipmunk0d1
 libactionmailer-ruby1.8
 devhelp-dbgsym
-deepin-jockey-common
 rdsserver
 XnView
 libethos-ui-1.0-0
@@ -3643,7 +3634,6 @@ fp-units-net-2.6.0
 libopencascade-modeling-dev
 gpe-question
 libpoppler28
-deepin-system-settings-module-touchpad
 plank
 librb-inotify-ruby1.9.1
 coinor-libosi0-dbg

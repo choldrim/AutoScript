@@ -33,7 +33,7 @@ if not os.path.exists(outputDir):
 logging.basicConfig(level=logging.DEBUG,
                    format="%(asctime)s %(filename)s[line:%(lineno)d] %(levelname)s %(message)s",
                    datefmt="%d %b %Y %H:%M:%S", 
-                   filename="dsc-checker.log",
+                   filename="DEBUG.LOG",
                    filemode="w")
 
 class SourcelistObject(object):
@@ -180,7 +180,10 @@ def genPackageFiles(sourcelistPath):
     for line in lines:
         slo = SourcelistObject(line)
         packageFilesUrl.append(slo.getAllPackageFilesUrl())
-        for (k,v ) in slo.getMd5sumMap().items():
+        md5map = slo.getMd5sumMap()
+        if not md5map:  # the release file url might be wrong
+            continue
+        for (k,v ) in md5map.items():
             md5SumsMap[k] = v
 
     path = os.path.join(packagesListDir, os.path.basename(sourcelistPath))
@@ -220,7 +223,7 @@ def genPackageFiles(sourcelistPath):
         if fileName.endswith(r".gz"):
             os.remove(os.path.join(path, fileName))
 
-"""
+        """
             # download packages.gz
             packageGZFileUrl = packageFileUrl + ".gz"
             with request.urlopen(packageGZFileUrl) as response:
@@ -240,7 +243,7 @@ def genPackageFiles(sourcelistPath):
         except HTTPError as e:
             print(e)
             print(packageGZFileUrl)
-"""
+        """
     
 def downloadThread(url, filePath):
     try:
@@ -269,6 +272,11 @@ def downloadThread(url, filePath):
         print(estr)
         logging.error(estr) 
 
+    except Exception as e:
+        estr = "err: %s, url: %s" % (str(e), packageGZFileUrl)
+        print(estr)
+        logging.error(estr) 
+
 
 from multiprocessing import Process
 from AutoSoftwareCenter import AutoSoftwareCenter
@@ -276,8 +284,6 @@ def checkerProcess(sourcelistPath):
     genPackageFiles(sourcelistPath)
     pkgListsPath = os.path.join(packagesListDir, 
                                 os.path.basename(sourcelistPath))
-
-    logging.debug("path: %s" %pkgListsPath)
 
     print("call AutoSoftwareCenter with: %s" % pkgListsPath)
     asc = AutoSoftwareCenter(pkgListsPath, outputDir)

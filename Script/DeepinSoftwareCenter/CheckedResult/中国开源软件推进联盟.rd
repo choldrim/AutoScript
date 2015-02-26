@@ -724,7 +724,6 @@ libmemcache-client-ruby1.8
 libstdc++6-4.7-dbg-arm64-cross
 pear-symfony-project-channel
 libxmlrpc-c++4
-deepin-jockey-kde
 libinline-ruby1.8
 libfsotransport-dev
 libgcc-4.7-dev-powerpc-cross
@@ -763,9 +762,8 @@ gambas2-gb-sdl
 libggzmod-dev
 libtransitioner1-dev
 libogre-1.7.4-dbg
-deepin-jockey-gtk
-libruby1.8
 jpilot-backup
+libruby1.8
 tntdb-postgresql3
 doc-linux-text
 ice34-services
@@ -2204,9 +2202,8 @@ libmpich1.0gf
 slepc3.2-doc
 libggzcore9
 liblua5.1-event0
-dh-deepin-modaliases
-freebsd-sendpr
 unity-lens-help
+freebsd-sendpr
 wine-gecko1.9
 martian-modem-source
 lazarus-doc-0.9.30.4
@@ -2584,6 +2581,7 @@ gambas2-gb-qt-opengl
 trac-ja-resource
 libnewtonsoft-json4.5-cil
 libglrr-gobject0
+gala-dbg
 kontact-mobile
 libvaladoc0
 llvm-3.2
@@ -3521,6 +3519,7 @@ firmware-b43-lpphy-installer
 libkrb5-ruby
 xnetcardconfig
 ttf-ecolier-lignes-court
+deepin-sample-music
 libdaemons-ruby
 libboost-thread1.53-dev
 python-wimpiggy
@@ -3607,7 +3606,6 @@ qtnx
 libchipmunk0d1
 libactionmailer-ruby1.8
 devhelp-dbgsym
-deepin-jockey-common
 rdsserver
 XnView
 libethos-ui-1.0-0

@@ -6,6 +6,7 @@ libgnomeprintui2.2-0
 libactiveldap-ruby-doc
 ttf-dzongkha
 biblememorizer
+seafile
 uboot-envtools
 linux-headers-3.8.0-22
 ruby-switch
@@ -625,6 +626,7 @@ mingw32-ocaml
 libmialm2
 banshee-extension-magnatune
 cvs2html
+steam-launcher
 liblua5.1-rings0
 lesstif2-dev
 libopencascade-dev
@@ -724,7 +726,6 @@ libmemcache-client-ruby1.8
 libstdc++6-4.7-dbg-arm64-cross
 pear-symfony-project-channel
 libxmlrpc-c++4
-deepin-jockey-kde
 libinline-ruby1.8
 libfsotransport-dev
 libgcc-4.7-dev-powerpc-cross
@@ -763,9 +764,8 @@ gambas2-gb-sdl
 libggzmod-dev
 libtransitioner1-dev
 libogre-1.7.4-dbg
-deepin-jockey-gtk
-libruby1.8
 jpilot-backup
+libruby1.8
 tntdb-postgresql3
 doc-linux-text
 ice34-services
@@ -784,12 +784,13 @@ libevs4
 liblua5.1-xmlrpc0
 postgresql-server-dev-9.1
 libdevhelp-3-1
+libimobiledevice-doc
 libqofexpensesobjects-dev
-libstonithd1
 libdebian-packages-compare-perl
 teleport
-epson-escpr
+libstonithd1
 librmagick-ruby
+epson-escpr
 lib64stdc++6-4.7-dbg-powerpc-cross
 isdnactivecards
 uwsgi-plugin-symcall
@@ -2204,9 +2205,8 @@ libmpich1.0gf
 slepc3.2-doc
 libggzcore9
 liblua5.1-event0
-dh-deepin-modaliases
-freebsd-sendpr
 unity-lens-help
+freebsd-sendpr
 wine-gecko1.9
 martian-modem-source
 lazarus-doc-0.9.30.4
@@ -2584,6 +2584,7 @@ gambas2-gb-qt-opengl
 trac-ja-resource
 libnewtonsoft-json4.5-cil
 libglrr-gobject0
+gala-dbg
 kontact-mobile
 libvaladoc0
 llvm-3.2
@@ -3198,6 +3199,7 @@ abuse-lib
 suikyo-table
 librsvg2-ruby1.8
 binutils-gold
+360safeforlinux
 minidlna
 quantum-metadata-agent
 libgcr-3-1-dbgsym
@@ -3521,6 +3523,7 @@ firmware-b43-lpphy-installer
 libkrb5-ruby
 xnetcardconfig
 ttf-ecolier-lignes-court
+deepin-sample-music
 libdaemons-ruby
 libboost-thread1.53-dev
 python-wimpiggy
@@ -3607,7 +3610,6 @@ qtnx
 libchipmunk0d1
 libactionmailer-ruby1.8
 devhelp-dbgsym
-deepin-jockey-common
 rdsserver
 XnView
 libethos-ui-1.0-0

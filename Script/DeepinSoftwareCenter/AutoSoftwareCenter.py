@@ -25,10 +25,16 @@ class AutoSoftwareCenter(object):
 
         # map:  database => tables
         self.databases = {
+            "db/software/software.db": (
+                "software",)}
+
+        """
+        self.databases = {
             "db/desktop/desktop2014.db": (
                 "package",),
             "db/software/software.db": (
                 "software",)}
+        """
 
         self.recordFile = open("%s.rd" % os.path.join(outputDir, os.path.basename(self.packagesFilesListPath)), "w")
 
