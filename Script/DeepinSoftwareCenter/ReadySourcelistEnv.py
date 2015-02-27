@@ -4,18 +4,23 @@
 import configparser
 import gzip
 import hashlib
-import os
 import logging
+import os
+import time
 
-from urllib import request
+from multiprocessing import Process
+#from urllib import request
 from urllib.error import HTTPError, URLError
 
 import requests
 
+from AutoSoftwareCenter import AutoSoftwareCenter
+
+
+# ready base directory
 packagesListDir = os.path.join(os.getcwd(), "PackagesFilesList")
 sourceslistDir = os.path.join(os.getcwd(), "SourcesList")
 mirrorsListDir = os.path.join(os.getcwd(), "MirrorsList")
-#outputDir = os.path.join(os.getcwd(), "Output")
 outputDir = os.path.join(os.getcwd(), "CheckedResult")
 
 if not os.path.exists(packagesListDir):
@@ -299,9 +304,6 @@ checkerProcessesStartTimeMap = {}
 checkerProcessesStatusMap = {}
 checkerProcesses = []
 
-import time
-from multiprocessing import Process
-from AutoSoftwareCenter import AutoSoftwareCenter
 # call by Process
 def checkerProcess(sourcelistPath):
     genPackageFiles(sourcelistPath)
@@ -329,6 +331,13 @@ def readySourceListEnv():
         checkerProcessesStatusMap[pname] = 0
 
         # if the num of processes is too many, wait...
+        while True:
+            if len(checkerProcesses) >= 20:
+                #print("too many processes, waiting: %s, wait for other processes exit..."
+                #     %(pname))
+                time.sleep(1)
+                continue
+            break
 
         print("time: %d, start checker process: %s " % (t, pname))
         p.start()
@@ -343,15 +352,20 @@ def processMonitor():
     t.start()
 
 processTimeoutValue = 3600
+maxAllowedZeroProcessTimes = 10 # exits actively when check zero running process after xx times
 def processMonitorThread():
+    zeroProcessTimes = 0
     while True:
         #print(" check process monitor...")
         # check process status
         aliveProcesses = [p for p in checkerProcesses if p.is_alive()]
-        deadProcesses = list(set(checkerProcesses) - set(checkerProcesses))
+        deadProcesses = list(set(checkerProcesses) - set(aliveProcesses))
         abortProcesses = [p for p in deadProcesses if p.exitcode != 0]
         finishProcesses = list(set(deadProcesses) - set(abortProcesses))
         #checkerProcessesName = [p.name for p in checkerProcesses ]
+        print("aliveP: %d, deadP: %d, abortP: %d, finishP: %d" \
+              %(len(aliveProcesses), len(deadProcesses), len(abortProcesses),
+                len(finishProcesses)))
 
         t1 = time.time()
         #print("now time: %d" %t1)
@@ -363,32 +377,43 @@ def processMonitorThread():
             
             # finished processes
             if k in [p.name for p in finishProcesses]:
-                checkerProcessesStatusMap[p.name] = "Finish(%d)" % (t1 - t0)
+                checkerProcessesStatusMap[k] = "Finish(%d)" % (t1 - t0)
 
             # aborted processes
             elif k in [p.name for p in abortProcesses]:
-                checkerProcessesStatusMap[p.name] = "Abort(%d)" % (t1 - t0)
+                checkerProcessesStatusMap[k] = "Abort(%d)" % (t1 - t0)
 
             else:
                 t = int(t1 - t0)
                 if t > processTimeoutValue: # time out
                     for p in checkerProcesses:
                         if p.name == k:
+                            print("process: %s is timeout, kill it.")
                             p.terminate()
                     checkerProcessesStatusMap[k] = "Time out, abort."
                 else:
                     checkerProcessesStatusMap[k] = t
 
-        with open("checkerProcesses.tmp", "w") as f:
+        with open("processes.log", "w") as f:
             for (k, v) in checkerProcessesStatusMap.items():
                 s = "%s : %s\n" % (k, v)
                 f.write(s)
 
         global checkerProcesses
         checkerProcesses = aliveProcesses
-
+        if len(checkerProcesses) == 0:
+            zeroProcessTimes += 1
+            print("there is not any checking process .. %d" %zeroProcessTimes)
+            if zeroProcessTimes >= maxAllowedZeroProcessTimes:
+                exitsMainProcess()
+        else:
+            zeroProcessTimes = 0
         time.sleep(1)
 
+
+def exitsMainProcess():
+    print("Exit Main Process.")
+    quit(1)
 
 if __name__ == '__main__':
     readySourceListEnv()

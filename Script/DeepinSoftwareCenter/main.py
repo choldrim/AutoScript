@@ -15,8 +15,9 @@ def readyWorkSpace():
     try:
         subprocess.call(["bash", "BeforeRun.sh"])
     except Exception as e:
-        #raise e
         print(e)
+        #raise e
+        pass
 
 def cleanWorkSpace():
     try:
