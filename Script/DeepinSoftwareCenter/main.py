@@ -37,7 +37,8 @@ if __name__ == "__main__":
         print("finish all checking")
 
         cleanWorkSpace()
-
+    except KeyboardInterrupt as e:
+        pass
     except Exception as e:
         traceback.print_exc()
 

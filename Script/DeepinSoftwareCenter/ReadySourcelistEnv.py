@@ -10,6 +10,7 @@ import logging
 from urllib import request
 from urllib.error import HTTPError, URLError
 
+import requests
 
 packagesListDir = os.path.join(os.getcwd(), "PackagesFilesList")
 sourceslistDir = os.path.join(os.getcwd(), "SourcesList")
@@ -70,13 +71,20 @@ class SourcelistObject(object):
     # map: packageFileUrl => md5Sum
     def getMd5sumMap(self): 
         try:
-            print("getting md5 sums from release files:")
+            #print("getting md5 sums from release files:")
             md5SumsMap = {}
             codeNameUrl = "%s/dists/%s" % (self.url, self.codeName)
             releaseFileUrl = "%s/Release" % codeNameUrl
-            print(releaseFileUrl)
-            response = request.urlopen(releaseFileUrl)
+            #print(releaseFileUrl)
+            """
+            response = request.urlopen(releaseFileUrl, timeout=20)
             data = response.read().decode("utf-8")
+            """
+            #replace urllib.request with requests
+            response = requests.get(releaseFileUrl)
+            data = response.content.decode("utf-8")
+            response.close()
+
             # filter other sum, like sha1...
             data = data[data.index("MD5Sum:"):data.index("SHA1:")]
             response.close()
@@ -187,7 +195,7 @@ def genPackageFiles(sourcelistPath):
             md5SumsMap[k] = v
 
     path = os.path.join(packagesListDir, os.path.basename(sourcelistPath))
-    print("store package file lists in :", path)
+    #print("store package file lists in :", path)
     if not os.path.exists(path):
         os.makedirs(path)
 
@@ -196,23 +204,25 @@ def genPackageFiles(sourcelistPath):
         for packageFileUrl in sourceGroup:
             filePath = os.path.join(path, \
                     packageFileUrl.split("http://")[1].replace("/", "_"))
-            print("ready:%s" % packageFileUrl)
-            print("check md5sum with file:\n %s" % filePath)
+            #print("ready:%s" % packageFileUrl)
+            #print("check md5sum with file:\n %s" % filePath)
             if os.path.exists(filePath):
                 with open(filePath, "rb") as f:
                     md5sum = hashlib.md5(f.read()).hexdigest()
                     key = os.path.basename(filePath)
                     if md5SumsMap[key] == md5sum:
-                        print (" package file %s is consistent with server file, don't need to update." % packageFileUrl)
+                        #print (" package file %s is consistent with server file, don't need to update." % packageFileUrl)
                         continue
                     else:
-                        print("md5sum is not consistent, update file...")
+                        #print("md5sum is not consistent, update file...")
+                        pass
             else:
-                print("package file not exits, download file ... ")
+                #print("package file not exits, download file ... ")
+                pass
 
             t = Thread(target=downloadThread, args=(packageFileUrl, filePath,))
             downloadThreads.append(t)
-            print("start a download new thread...")
+            #print("start a download new thread...")
             t.start()
 
         for t in downloadThreads:
@@ -226,7 +236,7 @@ def genPackageFiles(sourcelistPath):
         """
             # download packages.gz
             packageGZFileUrl = packageFileUrl + ".gz"
-            with request.urlopen(packageGZFileUrl) as response:
+            with request.urlopen(packageGZFileUrl, timeout=20) as response:
                 data = response.read()
 
             # store zip file
@@ -251,10 +261,16 @@ def downloadThread(url, filePath):
 
         # download packages.gz
         packageGZFileUrl = packageFileUrl + ".gz"
+        """
         with request.urlopen(packageGZFileUrl) as response:
             data = response.read()
+        """
+        # replace request with requests
+        response = requests.get(packageGZFileUrl)
+        data = response.content
+        response.close()
 
-        print("finish download package file: %s " % packageFileUrl)
+        #print("finish download package file: %s " % packageFileUrl)
 
         # store zip file
         # packages.gz file path
@@ -276,30 +292,102 @@ def downloadThread(url, filePath):
         estr = "err: %s, url: %s" % (str(e), packageGZFileUrl)
         print(estr)
         logging.error(estr) 
+        raise e
 
 
+checkerProcessesStartTimeMap = {}
+checkerProcessesStatusMap = {}
+checkerProcesses = []
+
+import time
 from multiprocessing import Process
 from AutoSoftwareCenter import AutoSoftwareCenter
+# call by Process
 def checkerProcess(sourcelistPath):
     genPackageFiles(sourcelistPath)
     pkgListsPath = os.path.join(packagesListDir, 
                                 os.path.basename(sourcelistPath))
 
-    print("call AutoSoftwareCenter with: %s" % pkgListsPath)
-    asc = AutoSoftwareCenter(pkgListsPath, outputDir)
+    #print("call AutoSoftwareCenter with: %s" % pkgListsPath)
+    AutoSoftwareCenter(pkgListsPath, outputDir)
 
 
 def readySourceListEnv():
+    # generate source list
     genAllSourcelists()
-    checkerProcesses = []
+
+    # start the process monitor thread
+    processMonitor()
+
     for sourcelistPath in getAllSourcelist():
-        p = Process(target=checkerProcess, args=(sourcelistPath, ))
-        print("start checker process...")
+        pname = os.path.basename(sourcelistPath)
+        p = Process(target=checkerProcess, args=(sourcelistPath, ), name=pname)
+
+        # mark the process start time
+        t = time.time()
+        checkerProcessesStartTimeMap[pname] = int(t)
+        checkerProcessesStatusMap[pname] = 0
+
+        # if the num of processes is too many, wait...
+
+        print("time: %d, start checker process: %s " % (t, pname))
         p.start()
         checkerProcesses.append(p)
 
+    # wait for processes
     for p in checkerProcesses:
         p.join()
+
+def processMonitor():
+    t = Thread(target=processMonitorThread)
+    t.start()
+
+processTimeoutValue = 3600
+def processMonitorThread():
+    while True:
+        #print(" check process monitor...")
+        # check process status
+        aliveProcesses = [p for p in checkerProcesses if p.is_alive()]
+        deadProcesses = list(set(checkerProcesses) - set(checkerProcesses))
+        abortProcesses = [p for p in deadProcesses if p.exitcode != 0]
+        finishProcesses = list(set(deadProcesses) - set(abortProcesses))
+        #checkerProcessesName = [p.name for p in checkerProcesses ]
+
+        t1 = time.time()
+        #print("now time: %d" %t1)
+        for (k, v) in checkerProcessesStatusMap.items(): 
+            if type(v) != int:   # finish or abort.
+                continue
+            # start time
+            t0 = checkerProcessesStartTimeMap[k]
+            
+            # finished processes
+            if k in [p.name for p in finishProcesses]:
+                checkerProcessesStatusMap[p.name] = "Finish(%d)" % (t1 - t0)
+
+            # aborted processes
+            elif k in [p.name for p in abortProcesses]:
+                checkerProcessesStatusMap[p.name] = "Abort(%d)" % (t1 - t0)
+
+            else:
+                t = int(t1 - t0)
+                if t > processTimeoutValue: # time out
+                    for p in checkerProcesses:
+                        if p.name == k:
+                            p.terminate()
+                    checkerProcessesStatusMap[k] = "Time out, abort."
+                else:
+                    checkerProcessesStatusMap[k] = t
+
+        with open("checkerProcesses.tmp", "w") as f:
+            for (k, v) in checkerProcessesStatusMap.items():
+                s = "%s : %s\n" % (k, v)
+                f.write(s)
+
+        global checkerProcesses
+        checkerProcesses = aliveProcesses
+
+        time.sleep(1)
 
 
 if __name__ == '__main__':

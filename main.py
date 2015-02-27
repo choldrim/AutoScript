@@ -100,7 +100,7 @@ class AutoScript(object):
         # mailing property
         self.mailingPropertyPath = "/home/choldrim/SRC/PYTHON/AutoScript/MailingProperty.ini"
         if not os.path.exists(self.mailingPropertyPath):
-            self.mailingPropertyPath = "./MailingProperty.ini"
+            self.mailingPropertyPath = os.path.join(os.getcwd(), "MailingProperty.ini")
         (self.smtpserver, self.username, self.password,
          self.sender) = self.getMailingProperty()
         self.subjectPrefix = "Deepin-CI/AutoScript"
