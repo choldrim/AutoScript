@@ -15,7 +15,7 @@ from email.mime.text import MIMEText
 class Project(object):
 
     def __init__(self, name, path, exucmd, maintainer=None, cclist=None,
-                 period=None, sendFile=None):
+                 period=None, sendFile=None, outputDir=None):
         self._name = name
         self._path = path
         self._exucmd = exucmd
@@ -23,6 +23,8 @@ class Project(object):
         self._cclist = [cc.strip() for cc in cclist.split(",") if len(cc) > 0]
         self._period = period
         self._sendFile = [f.strip() for f in sendFile.split(",") if len(f) > 0]
+        self._outputDir = [d.strip()
+                           for d in outputDir.split(",") if len(d) > 0]
         self._outputLog = ""
 
     def __str__(self):
@@ -85,6 +87,14 @@ class Project(object):
         self._sendFile = value
 
     @property
+    def outputDir(self):
+        return self._outputDir
+
+    @outputDir.setter
+    def outputDir(self, value):
+        self._outputDir = value
+
+    @property
     def outputLog(self):
         return self._outputLog
 
@@ -143,21 +153,28 @@ class AutoScript(object):
 
     def getAllProjects(self, scriptDir):
 
+        """
+        init all valid projects
+        """
         allProjects = []
-        allDirs =[os.path.join(scriptDir, d) for d in os.listdir(scriptDir) if os.path.isdir(os.path.join(scriptDir, d))]
-        proDirs = [d for d in allDirs if self.propertyFileName in os.listdir(d)]
+        allDirs =[os.path.join(scriptDir, d)
+                  for d in os.listdir(scriptDir) if os.path.isdir(os.path.join(scriptDir, d))]
+        proDirs = [d for
+                   d in allDirs if self.propertyFileName in os.listdir(d)]
 
         for proDir in proDirs:
             config = configparser.ConfigParser()
             config.read(os.path.join(proDir, self.propertyFileName))
             if config["SYSTEM"]["Enable"] != "1":
                 continue
-            project = Project(config["DEFAULT"]["Name"], proDir,
+            project = Project(config["DEFAULT"]["Name"],
+                              proDir,
                               config["DEFAULT"]["EXUCMD"],
                               config["DEFAULT"]["Maintainer"],
                               config["DEFAULT"]["CCList"],
                               config["DEFAULT"]["Period"],
-                              config["DEFAULT"]["SendFile"]
+                              config["DEFAULT"]["SendFile"],
+                              config["DEFAULT"]["OutputDir"]
                               )
             allProjects.append(project)
 
@@ -222,12 +239,19 @@ class AutoScript(object):
                 return
         """
 
+        workspacesStr = ""
+        for dir in project.outputDir:
+            item = """<br><a href="https://ci.deepin.io/job/AutoScript/ws/Script/%s/%s">
+            %s/%s</a>""" % (os.path.basename(project.path), dir,
+                             os.path.basename(project.path), dir)
+            workspacesStr += item
+
         self.sendMail(
             msg="""
             %s Script return non-zero <br>
-            see workspace <a href="https://ci.deepin.io/job/AutoScript/ws/Script/%s">
-            %s workspace</a>
-            """ % (project.name, os.path.basename(project.path), project.name),
+            see directory:
+            %s
+            """ % (project.name, workspacesStr),
             subject=project.name,
             receiver=project.cclist
             )
