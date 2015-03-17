@@ -1,5 +1,6 @@
 # add by choldrim
 MailingProperty.ini
+Script/*
 *.log
 *.LOG
 
