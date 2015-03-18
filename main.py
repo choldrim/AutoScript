@@ -108,7 +108,7 @@ class AutoScript(object):
     def __init__(self):
 
         # mailing property
-        self.mailingPropertyPath = "/home/openqa/.AutoScriptConfig/MailingProperty.ini"
+        self.mailingPropertyPath = os.path.join(os.getenv("HOME"), ".AutoScriptConfig/MailingProperty.ini")
         if not os.path.exists(self.mailingPropertyPath):
             self.mailingPropertyPath = os.path.join(os.getcwd(), "MailingProperty.ini")
         (self.smtpserver, self.username, self.password,
@@ -143,7 +143,7 @@ class AutoScript(object):
         except Exception as e:
             print("get mailing service fail")
             raise e
-       
+
 
     def getMailingProperty(self):
         config = configparser.ConfigParser()
