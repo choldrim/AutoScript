@@ -8,23 +8,29 @@ import smtplib
 
 from datetime import datetime
 
+from email import encoders
 from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
 
 
 class Project(object):
 
-    def __init__(self, name, path, exucmd, maintainer=None, cclist=None,
-                 period=None, sendFile=None, outputDir=None):
-        self._name = name
-        self._path = path
-        self._exucmd = exucmd
-        self._maintainer = maintainer
-        self._cclist = [cc.strip() for cc in cclist.split(",") if len(cc) > 0]
-        self._period = period
-        self._sendFile = [f.strip() for f in sendFile.split(",") if len(f) > 0]
-        self._outputDir = [d.strip()
-                           for d in outputDir.split(",") if len(d) > 0]
+    def __init__(self, name, path, exucmd, **args):
+            #maintainer=None, cclist=None, period=None, sendFile=None, resultDir=None, args):
+        self._name = name.strip()
+        self._path = path.strip()
+        self._exucmd = exucmd.strip()
+        self._maintainer = args.get("maintainer", "").strip()
+        self._cclist = [cc.strip() for cc in args.get("ccList", "").split(",") if len(cc.strip()) > 0]
+        self._period = args.get("period", "").strip()
+        self._sendFile = [f.strip() for f in args.get("sendFile", "").split(",") if len(f.strip()) > 0]
+        self._resultDir = [d.strip() for d in args.get("resultDir", "").split(",") if len(d.strip()) > 0]
+
+        self.mailingHowever = args.get("mailingHowever", "0")
+        self.mailingOnFail = args.get("mailingOnFail", "0")
+        self.cleanFile = [f.strip() for f in args.get("cleanFile", "").split(",") if len(f.strip()) > 0]
+
         self._outputLog = ""
 
     def __str__(self):
@@ -87,12 +93,12 @@ class Project(object):
         self._sendFile = value
 
     @property
-    def outputDir(self):
-        return self._outputDir
+    def resultDir(self):
+        return self._resultDir
 
-    @outputDir.setter
-    def outputDir(self, value):
-        self._outputDir = value
+    @resultDir.setter
+    def resultDir(self, value):
+        self._resultDir = value
 
     @property
     def outputLog(self):
@@ -107,25 +113,21 @@ class AutoScript(object):
 
     def __init__(self):
 
+        self.configs = {}
+
         # mailing property
         self.mailingPropertyPath = os.path.join(os.getenv("HOME"), ".AutoScriptConfig/MailingProperty.ini")
         if not os.path.exists(self.mailingPropertyPath):
             self.mailingPropertyPath = os.path.join(os.getcwd(), "MailingProperty.ini")
-        (self.smtpserver, self.username, self.password,
-         self.sender) = self.getMailingProperty()
+
+        (self.smtpserver, self.username, self.password, self.sender) = self.getMailingProperty()
+
         self.subjectPrefix = "Deepin-CI/AutoScript"
 
-        # mailing
-        """
-        self.smtp = smtplib.SMTP()
-        if not self.readyMailingService(self.smtpserver, self.username, self.password):
-            quit(1)
-        print("SMTP Service is ready!")
-        """
 
+        # init projects
         self.propertyFileName = "AUTO.ini"
         self.scriptDir = os.path.join(os.getcwd(), "Script")
-        print(self.scriptDir)
         self.allProjects = self.getAllProjects(self.scriptDir)
 
         self.projectOutputFile = "__SCRIPT_OUTPUT__.LOG"
@@ -149,7 +151,7 @@ class AutoScript(object):
         config = configparser.ConfigParser()
         config.read(self.mailingPropertyPath)
         return config["DEFAULT"]["SMTPServer"], config["DEFAULT"]["UserName"], \
-            config["DEFAULT"]["Password"], config["DEFAULT"]["Sender"]
+            config["DEFAULT"]["Password"], config["DEFAULT"]["UserName"]
 
     def getAllProjects(self, scriptDir):
 
@@ -159,105 +161,128 @@ class AutoScript(object):
         allProjects = []
         allDirs =[os.path.join(scriptDir, d)
                   for d in os.listdir(scriptDir) if os.path.isdir(os.path.join(scriptDir, d))]
-        proDirs = [d for
-                   d in allDirs if self.propertyFileName in os.listdir(d)]
+        proDirs = [d for d in allDirs if self.propertyFileName in os.listdir(d)]
 
         for proDir in proDirs:
-            config = configparser.ConfigParser()
-            config.read(os.path.join(proDir, self.propertyFileName))
-            if config["SYSTEM"]["Enable"] != "1":
+
+            proName = os.path.basename(proDir)
+
+            if self.getProConfValue(proName, "SYSTEM", "Enable") != "1":
                 continue
-            project = Project(config["DEFAULT"]["Name"],
-                              proDir,
-                              config["DEFAULT"]["EXUCMD"],
-                              config["DEFAULT"]["Maintainer"],
-                              config["DEFAULT"]["CCList"],
-                              config["DEFAULT"]["Period"],
-                              config["DEFAULT"]["SendFile"],
-                              config["DEFAULT"]["OutputDir"]
-                              )
+
+            project = Project(self.getProConfValue(proName, "DEFAULT", "Name"),
+                    proDir,
+                    self.getProConfValue(proName, "DEFAULT", "EXUCMD"),
+                    maintainer = self.getProConfValue(proName, "DEFAULT", "Maintainer"),
+                    ccList = self.getProConfValue(proName, "DEFAULT", "CCList"),
+                    period = self.getProConfValue(proName, "DEFAULT", "Period"),
+                    sendFile = self.getProConfValue(proName, "DEFAULT", "SendFile"),
+                    resultDir = self.getProConfValue(proName, "DEFAULT", "ResultDir"),
+                    mailingHowever = self.getProConfValue(proName, "DEFAULT", "MailingHowever"),
+                    mailingOnFail = self.getProConfValue(proName, "DEFAULT", "MailingOnFail"),
+                    cleanFile = self.getProConfValue(proName, "DEFAULT", "CleanFile")
+                    )
+
             allProjects.append(project)
 
         return allProjects
 
+
+    def getProConfValue(self, proName, section, key, default=""):
+
+        if not self.configs.get(proName):
+            self.configs[proName] = configparser.ConfigParser()
+            self.configs[proName].read("%s/%s/%s" % (self.scriptDir, proName, self.propertyFileName))
+
+        return self.configs[proName].get(section, key, fallback="")
+
+
     def work(self, allProjects):
+
         failProjects = []
+        successProjects = []
         for project in allProjects:
             print("cmd:", project.exucmd)
+
+            # change to sub project dir
             os.chdir(project.path)
+
             try:
+
                 debug = open(self.projectOutputFile, "w")
-                debug.write(str(datetime.now()))
+                debug.write("___AutoScript -- %s___\n" % (str(datetime.now())))
                 debug.flush()
+                print ("EXUCMD: ", project.exucmd)
                 output = subprocess.check_output(project.exucmd.split(" "), stderr=debug)
                 debug.write(output.decode("utf-8"))
                 debug.close()
                 print("Script: %s, excuted successfully!" % (project.name))
+                successProjects.append(project)
+
             except subprocess.CalledProcessError as e:
+
                 print("Script: %s, return non-zero" % (project.name))
                 debug.write(e.output.decode("utf-8"))
                 debug.close()
                 failProjects.append(project)
 
         # send mails
-        if len(failProjects) > 0:
-            for project in failProjects:
+        for project in successProjects:
+            if project.mailingHowever:
                 print()
                 print("=" * 60)
-                print(
-                    "Handle failed protject: %s\n sending mail..." %
-                    project.name)
+                print( "Handle success protject: %s\n sending mail..." % project.name)
+                self.handleSuccessProject(project)
+                print("=" * 60)
+
+        for project in failProjects:
+            if project.mailingHowever or project.mailingOnFail:
+                print()
+                print("=" * 60)
+                print( "Handle failed protject: %s\n sending mail..." % project.name)
                 self.handleFailProject(project)
                 print("=" * 60)
 
-    def handleFailProject(self, project):
-        """
-        sendFiles = project.sendFile
-        sendFiles.append(self.projectOutputFile)
-        sendFiles = list(
-            map(lambda f: os.path.join(project.path, f), sendFiles))
-        for sendFile in sendFiles:
-            if not os.path.exists(sendFile):
-                # not found sendingFile
-                err = " Posting file can not be found: %s"\
-                    % os.path.basename(sendFile)
-                print(err)
-                print(" sending err to maintainer...")
-                self.sendMail(
-                    project.maintainer,
-                    subject=project.name,
-                    msg=err,
-                    fileList=[
-                        os.path.join(
-                            project.path,
-                            self.projectOutputFile)]
-                )
+        # clean the files those need to be cleaned
+        for project in successProjects + failProjects:
+            self.cleanTheCleanedFile(project)
 
-                print(" finish sending, return")
 
-                # skip the rest of actions
-                return
-        """
+    def handleSuccessProject(self, project):
+
+        fileList = []
+        #fileList.append(os.path.join(project.path, self.projectOutputFile))
+        sendFileList = [os.path.join(project.path, f) for f in project.sendFile]
+        fileList += sendFileList
 
         workspacesStr = ""
-        for dir in project.outputDir:
+        for d in project.resultDir:
+            item = """<br><a href="https://ci.deepin.io/job/AutoScript/ws/Script/%s/%s">
+            %s/%s</a>""" % (os.path.basename(project.path), d, os.path.basename(project.path), d)
+            workspacesStr += item
+
+        msg = """ %s script has been completed, <br> check it on jenkins: %s """ % (project.name, workspacesStr)
+        self.sendMail(msg=msg, subject=project.name, receiver=project.cclist, fileList=fileList)
+
+    def handleFailProject(self, project):
+
+        fileList = []
+        #fileList.append(os.path.join(project.path, self.projectOutputFile))
+        sendFileList = [os.path.join(project.path, f) for f in project.sendFile]
+        fileList += sendFileList
+
+        workspacesStr = ""
+        for dir in project.resultDir:
             item = """<br><a href="https://ci.deepin.io/job/AutoScript/ws/Script/%s/%s">
             %s/%s</a>""" % (os.path.basename(project.path), dir,
                              os.path.basename(project.path), dir)
             workspacesStr += item
 
-        self.sendMail(
-            msg="""
-            %s Script return non-zero <br>
-            see directory:
-            %s
-            """ % (project.name, workspacesStr),
-            subject=project.name,
-            receiver=project.cclist
-            )
+        msg = """ %s Script return non-zero <br> check it on jenkins: %s """ % (project.name, workspacesStr)
+        self.sendMail(msg=msg, subject=project.name, receiver=project.cclist, fileList=fileList)
 
-    def sendMail(
-            self, receiver, msg="", subject="", sender=None, fileList=[]):
+
+    def sendMail( self, receiver, msg="", subject="", sender=None, fileList=[]):
 
         if sender is None:
             sender = self.sender
@@ -272,11 +297,13 @@ class AutoScript(object):
 
         # attache file
         for sendFile in fileList:
-            with open(sendFile) as f:
-                att = MIMEText(f.read(), "base64", "utf-8")
-            att["Content-Type"] = "application/octet-stream"
-            att["Content-Disposition"] = 'attachment; filename="%s"'\
-                % os.path.basename(sendFile)
+            print ("send file: ", sendFile)
+            att = MIMEBase("application", "zip")
+            with open(sendFile, "rb") as f:
+                att.set_payload(f.read())
+            encoders.encode_base64(att)
+            #att["Content-Type"] = "application/octet-stream"
+            att["Content-Disposition"] = 'attachment; filename="%s"' % os.path.basename(sendFile)
             msgRoot.attach(att)
 
         footer = """
@@ -298,16 +325,15 @@ class AutoScript(object):
                as e:
             print(e)
             raise e
-        """
-            print("try to connect again ... ")
-            if not self.readyMailingService(self.smtpserver, self.username, self.password):
-                print("can not connect to mailing server, abort.")
-                raise e
-                quit(1)
-            self.smtp.sendmail(self.sender, receiver, msgRoot.as_string())
-        """
 
         print(" mailing successfully")
+
+    def cleanTheCleanedFile(self, project):
+
+        cleanedFile = [os.path.join(project.path, f) for f in project.cleanFile]
+        rmCmd = "rm -rf %s" % " ".join(cleanedFile)
+        print ("clean files cmd: ", rmCmd)
+        os.system(rmCmd)
 
 
 if __name__ == "__main__":
