@@ -30,6 +30,7 @@ class Project(object):
         self.mailingHowever = args.get("mailingHowever", "0")
         self.mailingOnFail = args.get("mailingOnFail", "0")
         self.cleanFile = [f.strip() for f in args.get("cleanFile", "").split(",") if len(f.strip()) > 0]
+        self.fileToMailingContent = [f.strip() for f in args.get("fileToMailingContent").split(",") if len(f.strip()) > 0]
 
         self._outputLog = ""
 
@@ -180,7 +181,8 @@ class AutoScript(object):
                     resultDir = self.getProConfValue(proName, "DEFAULT", "ResultDir"),
                     mailingHowever = self.getProConfValue(proName, "DEFAULT", "MailingHowever"),
                     mailingOnFail = self.getProConfValue(proName, "DEFAULT", "MailingOnFail"),
-                    cleanFile = self.getProConfValue(proName, "DEFAULT", "CleanFile")
+                    cleanFile = self.getProConfValue(proName, "DEFAULT", "CleanFile"),
+                    fileToMailingContent = self.getProConfValue(proName, "DEFAULT", "FileToMailingContent")
                     )
 
             allProjects.append(project)
@@ -261,13 +263,21 @@ class AutoScript(object):
             %s/%s</a>""" % (os.path.basename(project.path), d, os.path.basename(project.path), d)
             workspacesStr += item
 
-        msg = """ %s script has been completed, <br> check it on jenkins: %s """ % (project.name, workspacesStr)
+        if project.fileToMailingContent:
+            msg = ""
+            for f in project.fileToMailingContent:
+                if os.path.exists(f):
+                    with open(f) as fp:
+                        msg += fp.read()
+                        msg += "<p>"
+        else:
+            msg = """ %s script has been completed, <br> check it on jenkins: %s """ % (project.name, workspacesStr)
+
         self.sendMail(msg=msg, subject=project.name, receiver=project.cclist, fileList=fileList)
 
     def handleFailProject(self, project):
 
         fileList = []
-        #fileList.append(os.path.join(project.path, self.projectOutputFile))
         sendFileList = [os.path.join(project.path, f) for f in project.sendFile]
         fileList += sendFileList
 
@@ -278,7 +288,16 @@ class AutoScript(object):
                              os.path.basename(project.path), dir)
             workspacesStr += item
 
-        msg = """ %s Script return non-zero <br> check it on jenkins: %s """ % (project.name, workspacesStr)
+        if project.fileToMailingContent:
+            msg = ""
+            for f in project.fileToMailingContent:
+                if os.path.exists(f):
+                    with open(f) as fp:
+                        msg += fp.read()
+                        msg += "<p>"
+        else:
+            msg = """ %s Script return non-zero <br> check it on jenkins: %s """ % (project.name, workspacesStr)
+
         self.sendMail(msg=msg, subject=project.name, receiver=project.cclist, fileList=fileList)
 
 
@@ -302,7 +321,6 @@ class AutoScript(object):
             with open(sendFile, "rb") as f:
                 att.set_payload(f.read())
             encoders.encode_base64(att)
-            #att["Content-Type"] = "application/octet-stream"
             att["Content-Disposition"] = 'attachment; filename="%s"' % os.path.basename(sendFile)
             msgRoot.attach(att)
 
@@ -310,8 +328,8 @@ class AutoScript(object):
         <br><hr>
         <footer>
           <br>
-          <p>Posted by: <a href="https://ci.deepin.io/job/AutoScript/">ci.deepin.io/job/AutoScript</a></p>
-          <p>Contact information: <a href="mailto:tangcaijun@linuxdeepin.com">tangcaijun@linuxdeepin.com</a></p>
+          <p>Posted by: <a href="https://ci.deepin.io/job/AutoScript/">deepin ci AutoScript</a></p>
+          <p>Contact: <a href="mailto:tangcaijun@linuxdeepin.com">tangcaijun@linuxdeepin.com</a></p>
         </footer>
         """
         signPart = MIMEText(footer, "html", "utf-8")
@@ -327,6 +345,7 @@ class AutoScript(object):
             raise e
 
         print(" mailing successfully")
+
 
     def cleanTheCleanedFile(self, project):
 
