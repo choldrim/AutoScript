@@ -31,6 +31,7 @@ class Project(object):
         self.mailingOnFail = args.get("mailingOnFail", "0")
         self.cleanFile = [f.strip() for f in args.get("cleanFile", "").split(",") if len(f.strip()) > 0]
         self.fileToMailingContent = [f.strip() for f in args.get("fileToMailingContent").split(",") if len(f.strip()) > 0]
+        self.mailingSubject = args.get("mailingSubject", "AutoScript").strip()
 
         self._outputLog = ""
 
@@ -182,7 +183,8 @@ class AutoScript(object):
                     mailingHowever = self.getProConfValue(proName, "DEFAULT", "MailingHowever"),
                     mailingOnFail = self.getProConfValue(proName, "DEFAULT", "MailingOnFail"),
                     cleanFile = self.getProConfValue(proName, "DEFAULT", "CleanFile"),
-                    fileToMailingContent = self.getProConfValue(proName, "DEFAULT", "FileToMailingContent")
+                    fileToMailingContent = self.getProConfValue(proName, "DEFAULT", "FileToMailingContent"),
+                    mailingSubject = self.getProConfValue(proName, "DEFAULT", "MailingSubject")
                     )
 
             allProjects.append(project)
@@ -273,7 +275,11 @@ class AutoScript(object):
         else:
             msg = """ %s script has been completed, <br> check it on jenkins: %s """ % (project.name, workspacesStr)
 
-        self.sendMail(msg=msg, subject=project.name, receiver=project.cclist, fileList=fileList)
+        now = datetime.now()
+        dateStr = "%d-%d-%d" %(now.year, now.month, now.day)
+        subject = "%s(%s)" % (project.mailingSubject, dateStr)
+
+        self.sendMail(msg=msg, subject=subject, receiver=project.cclist, fileList=fileList)
 
     def handleFailProject(self, project):
 
@@ -298,7 +304,11 @@ class AutoScript(object):
         else:
             msg = """ %s Script return non-zero <br> check it on jenkins: %s """ % (project.name, workspacesStr)
 
-        self.sendMail(msg=msg, subject=project.name, receiver=project.cclist, fileList=fileList)
+        now = datetime.now()
+        dateStr = "%d-%d-%d" %(now.year, now.month, now.day)
+        subject = "%s(%s)" % (project.mailingSubject, dateStr)
+
+        self.sendMail(msg=msg, subject=subject, receiver=project.cclist, fileList=fileList)
 
 
     def sendMail( self, receiver, msg="", subject="", sender=None, fileList=[]):
@@ -308,7 +318,8 @@ class AutoScript(object):
 
         # collect the attach
         msgRoot = MIMEMultipart("alternative")
-        msgRoot["Subject"] = "%s: %s" % (self.subjectPrefix, subject)
+        #msgRoot["Subject"] = "%s: %s" % (self.subjectPrefix, subject)
+        msgRoot["Subject"] = "%s" % (subject)
 
         # attach msg
         msgPart = MIMEText("%s%s" %(msg, "<br>"), "html", "utf-8")
